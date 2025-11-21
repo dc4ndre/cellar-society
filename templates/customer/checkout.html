@@ -1,0 +1,106 @@
+{% extends "customer/base.html" %}
+
+{% block title %}Checkout - Cellar Society{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
+        💳 Checkout
+    </h2>
+    <p style="color: var(--muted); font-size: 1.1em;">Complete your order</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+    <!-- Order Review -->
+    <div>
+        <div class="card">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">📦 Order Review</h3>
+            
+            {% for item_id, item in cart.items() %}
+            <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #e5e0da;">
+                <div style="flex: 0 0 60px;">
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" 
+                         style="width: 60px; height: 80px; object-fit: contain; border-radius: 6px; background: white; padding: 2px; border: 1px solid #e5e0da;">
+                    {% else %}
+                    <div style="width: 60px; height: 80px; background: rgba(198, 166, 100, 0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        🍷
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div style="flex: 1;">
+                    <h4 style="color: var(--primary); margin-bottom: 4px;">{{ item.name }}</h4>
+                    <p style="color: var(--muted); font-size: 14px;">Quantity: {{ item.quantity }}</p>
+                    <p style="color: var(--accent); font-weight: 600; margin-top: 4px;">
+                        ₱{{ "%.2f"|format(item.price) }} × {{ item.quantity }} = ₱{{ "%.2f"|format(item.price * item.quantity) }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card" style="background: rgba(198, 166, 100, 0.05);">
+            <h3 style="color: var(--primary); margin-bottom: 16px;">📋 Order Instructions</h3>
+            <ul style="line-height: 2; color: var(--text); padding-left: 20px;">
+                <li>Please ensure your delivery address is correct</li>
+                <li>Orders will be processed within 1-2 business days</li>
+                <li>You will receive order updates via email</li>
+                <li>Delivery time: 3-5 business days</li>
+                <li>Contact us for any special requests</li>
+            </ul>
+        </div>
+
+        <a href="{{ url_for('view_cart') }}" class="btn ghost" style="width: 100%;">
+            ← Back to Cart
+        </a>
+    </div>
+
+    <!-- Payment Summary -->
+    <div>
+        <div class="card" style="position: sticky; top: 100px;">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">💰 Payment Summary</h3>
+            
+            <div style="padding: 16px 0; border-top: 1px solid #e5e0da; border-bottom: 1px solid #e5e0da; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Subtotal:</span>
+                    <span style="font-weight: 600;">₱{{ "%.2f"|format(total) }}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Delivery Fee:</span>
+                    <span style="font-weight: 600; color: var(--success);">FREE</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Tax:</span>
+                    <span style="font-weight: 600;">Included</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 24px; padding: 16px; background: rgba(198, 166, 100, 0.1); border-radius: 8px;">
+                <span style="font-size: 1.2em; font-weight: 600; color: var(--primary);">Total Amount:</span>
+                <span style="font-size: 2em; font-weight: 700; color: var(--accent);">₱{{ "%.2f"|format(total) }}</span>
+            </div>
+
+            <div style="background: #fff3cd; border-left: 4px solid var(--warning); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                <p style="font-size: 13px; color: #856404; margin: 0;">
+                    <strong>Payment:</strong> Cash on Delivery (COD)
+                </p>
+            </div>
+
+            <form method="POST">
+                <button type="submit" class="btn accent" style="width: 100%; font-size: 16px;" 
+                        onclick="return confirm('Confirm your order for ₱{{ total|round(2) }}?');">
+                    ✓ Place Order
+                </button>
+            </form>
+
+            <p style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--muted); line-height: 1.6;">
+                By placing this order, you agree to our Terms & Conditions and Privacy Policy
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

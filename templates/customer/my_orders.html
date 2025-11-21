@@ -1,0 +1,277 @@
+{% extends "customer/base.html" %}
+
+{% block title %}My Orders - Cellar Society{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
+        My Orders
+    </h2>
+    <p style="color: var(--muted); font-size: 1.1em;">Track and manage your purchases</p>
+</div>
+
+<!-- Order Status Tabs -->
+<div class="card" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; overflow-x: auto;">
+
+        <!-- ALL ORDERS -->
+        <a href="{{ url_for('my_orders') }}"
+           {% if not status_filter %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            All Orders
+        </a>
+
+        <!-- TO PAY -->
+        <a href="{{ url_for('my_orders', status='Pending') }}"
+           {% if status_filter == 'Pending' %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            To Pay
+            {% if pending_count > 0 %}
+                <span style="background: var(--danger); color: white;
+                             padding: 2px 8px; border-radius: 12px;
+                             font-size: 11px; margin-left: 4px;">
+                    {{ pending_count }}
+                </span>
+            {% endif %}
+        </a>
+
+        <!-- PROCESSING -->
+        <a href="{{ url_for('my_orders', status='Processing') }}"
+           {% if status_filter == 'Processing' %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            To Ship
+            {% if processing_count > 0 %}
+                <span style="background: var(--warning); color: #854d0e;
+                             padding: 2px 8px; border-radius: 12px;
+                             font-size: 11px; margin-left: 4px;">
+                    {{ processing_count }}
+                </span>
+            {% endif %}
+        </a>
+
+        <!-- DELIVERED -->
+        <a href="{{ url_for('my_orders', status='Delivered') }}"
+           {% if status_filter == 'Delivered' %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            To Receive
+            {% if delivered_count > 0 %}
+                <span style="background: var(--primary); color: white;
+                             padding: 2px 8px; border-radius: 12px;
+                             font-size: 11px; margin-left: 4px;">
+                    {{ delivered_count }}
+                </span>
+            {% endif %}
+        </a>
+
+        <!-- RECEIVED -->
+        <a href="{{ url_for('my_orders', status='Received') }}"
+           {% if status_filter == 'Received' %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            Completed
+        </a>
+
+        <!-- CANCELLED -->
+        <a href="{{ url_for('my_orders', status='Cancelled') }}"
+           {% if status_filter == 'Cancelled' %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid var(--accent); white-space: nowrap;
+                       transition: all 0.3s; color: var(--accent);"
+           {% else %}
+                style="padding: 16px 24px; text-decoration: none; font-weight: 600;
+                       border-bottom: 3px solid transparent; white-space: nowrap;
+                       transition: all 0.3s; color: var(--text);"
+           {% endif %}
+        >
+            Cancelled
+        </a>
+
+    </div>
+</div>
+
+
+{% if orders %}
+<!-- Orders List -->
+<div style="display: grid; gap: 16px;">
+    {% for order in orders %}
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <!-- Order Header -->
+        <div style="padding: 16px 24px; background: rgba(198, 166, 100, 0.05); border-bottom: 1px solid #e5e0da; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <div>
+                    <span style="color: var(--muted); font-size: 12px;">ORDER NUMBER</span>
+                    <p style="font-weight: 600; color: var(--primary); margin: 0;">#{{ loop.index }}</p>
+                </div>
+                <div>
+                    <span style="color: var(--muted); font-size: 12px;">ORDER DATE</span>
+                    <p style="font-weight: 600; margin: 0;">{{ order.order_date[:10] }}</p>
+                </div>
+            </div>
+            
+            <!-- Status Badge -->
+            {% if order.status == 'Pending' %}
+                <span style="background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">To Pay</span>
+            {% elif order.status == 'Processing' %}
+                <span style="background: #d1ecf1; color: #0c5460; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">To Ship</span>
+            {% elif order.status == 'Delivered' %}
+                <span style="background: #e2e3e5; color: #383d41; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">To Receive</span>
+            {% elif order.status == 'Received' %}
+                <span style="background: #d4edda; color: #155724; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">Completed</span>
+            {% elif order.status == 'Cancelled' %}
+                <span style="background: #f8d7da; color: #721c24; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">Cancelled</span>
+            {% endif %}
+        </div>
+
+        <!-- Order Content -->
+        <div style="padding: 20px 24px;">
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <!-- Product Image -->
+                <div style="flex: 0 0 100px;">
+                    {% if order.product_image %}
+                    <img src="{{ order.product_image }}" alt="{{ order.product_name }}" 
+                         style="width: 100px; height: 130px; object-fit: contain; border-radius: 8px; border: 1px solid #e5e0da;">
+                    {% else %}
+                    <div style="width: 100px; height: 130px; background: rgba(198, 166, 100, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                        🍷
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Details -->
+                <div style="flex: 1;">
+                    <h3 style="color: var(--primary); margin: 0 0 8px 0; font-size: 1.2em;">{{ order.product_name }}</h3>
+                    <p style="color: var(--muted); font-size: 14px; margin: 4px 0;">
+                        <span class="badge primary">{{ order.product_type }}</span>
+                    </p>
+                    <p style="color: var(--text); margin: 8px 0;">Quantity: <strong>{{ order.quantity }} bottle(s)</strong></p>
+                </div>
+
+                <!-- Price -->
+                <div style="text-align: right; flex: 0 0 150px;">
+                    <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">Total Price</p>
+                    <p style="color: var(--accent); font-weight: 700; font-size: 1.8em; margin: 0;">₱{{ "%.2f"|format(order.total_price) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Actions -->
+        <div style="padding: 16px 24px; background: #f9f8f7; border-top: 1px solid #e5e0da; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                {% if order.status == 'Pending' %}
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">Your order is being processed. Please complete the payment.</p>
+                {% elif order.status == 'Processing' %}
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">Your order is being packed and prepared for shipment</p>
+                {% elif order.status == 'Delivered' %}
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">Order has been delivered. Please confirm receipt.</p>
+                {% elif order.status == 'Received' %}
+                    <p style="color: var(--success); font-size: 13px; margin: 0;">Order completed. Thank you for your purchase!</p>
+                {% elif order.status == 'Cancelled' %}
+                    <p style="color: var(--danger); font-size: 13px; margin: 0;">This order was cancelled</p>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                {% if order.status == 'Pending' %}
+                    <form method="POST" action="{{ url_for('cancel_order', order_id=order.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-small" 
+                                style="background: white; border: 1px solid var(--danger); color: var(--danger);"
+                                onclick="return confirm('Cancel this order?');">
+                            Cancel Order
+                        </button>
+                    </form>
+                {% elif order.status == 'Delivered' %}
+                    <form method="POST" action="{{ url_for('mark_received', order_id=order.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-small success" 
+                                style="background: var(--success);"
+                                onclick="return confirm('Confirm that you have received this order?');">
+                            Order Received
+                        </button>
+                    </form>
+                {% elif order.status == 'Received' %}
+                    <a href="{{ url_for('product_detail', product_id=order.product_id) }}" class="btn btn-small accent">Buy Again</a>
+                {% elif order.status == 'Cancelled' %}
+                    <a href="{{ url_for('product_detail', product_id=order.product_id) }}" class="btn btn-small accent">Buy Again</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div style="text-align: center; margin-top: 30px;">
+    <p style="color: var(--muted);">Showing {{ orders|length }} order(s){% if status_filter %} in "{{ status_filter }}" status{% endif %}</p>
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="card" style="text-align: center; padding: 80px 20px;">
+    {% if status_filter == 'Pending' %}
+        <div style="font-size: 80px; margin-bottom: 24px;">💰</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Pay</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You don't have any pending payments</p>
+    {% elif status_filter == 'Processing' %}
+        <div style="font-size: 80px; margin-bottom: 24px;">📦</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Ship</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">No orders are currently being prepared</p>
+    {% elif status_filter == 'Delivered' %}
+        <div style="font-size: 80px; margin-bottom: 24px;">🚚</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Receive</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">No orders are waiting for your confirmation</p>
+    {% elif status_filter == 'Received' %}
+        <div style="font-size: 80px; margin-bottom: 24px;">⭐</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Completed Orders</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You haven't completed any orders yet</p>
+    {% elif status_filter == 'Cancelled' %}
+        <div style="font-size: 80px; margin-bottom: 24px;">❌</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Cancelled Orders</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You don't have any cancelled orders</p>
+    {% else %}
+        <div style="font-size: 80px; margin-bottom: 24px;">📋</div>
+        <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders Yet</h3>
+        <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You haven't placed any orders. Start shopping for premium wines!</p>
+    {% endif %}
+    
+    <a href="{{ url_for('shop') }}" class="btn accent" style="font-size: 16px;">Browse Wines</a>
+</div>
+{% endif %}
+
+{% endblock %}

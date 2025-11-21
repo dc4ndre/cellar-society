@@ -21,17 +21,45 @@
             <div style="margin-bottom: 16px;">
                 <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">Order Status</p>
                 {% if order.status == 'Pending' %}
-                    <span class="badge warning" style="font-size: 16px; padding: 8px 16px;">⏳ Pending</span>
+                    <span class="badge warning" style="font-size: 16px; padding: 8px 16px;">Pending</span>
                 {% elif order.status == 'Processing' %}
-                    <span class="badge primary" style="font-size: 16px; padding: 8px 16px;">🔄 Processing</span>
+                    <span class="badge primary" style="font-size: 16px; padding: 8px 16px;">Processing</span>
                 {% elif order.status == 'Delivered' %}
-                    <span class="badge success" style="font-size: 16px; padding: 8px 16px;">🚚 Delivered</span>
+                    <span class="badge success" style="font-size: 16px; padding: 8px 16px;">Delivered</span>
                 {% elif order.status == 'Received' %}
-                    <span class="badge success" style="font-size: 16px; padding: 8px 16px;">✅ Received</span>
+                    <span class="badge success" style="font-size: 16px; padding: 8px 16px;">Received</span>
+                {% elif order.status == 'Cancelled' %}
+                    <span class="badge danger" style="font-size: 16px; padding: 8px 16px;">Cancelled</span>
                 {% else %}
                     <span class="badge" style="font-size: 16px; padding: 8px 16px;">{{ order.status }}</span>
                 {% endif %}
             </div>
+
+            <!-- Status Update Form -->
+            {% if order.status not in ['Received', 'Cancelled'] %}
+            <div style="margin-bottom: 16px; padding: 16px; background: rgba(198, 166, 100, 0.05); border-radius: 8px; border-left: 4px solid var(--accent);">
+                <p style="font-weight: 600; color: var(--primary); margin-bottom: 12px;">Update Order Status</p>
+                <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}">
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select name="status" required
+                                style="flex: 1; padding: 10px 12px; border-radius: 6px; border: 2px solid var(--accent); font-size: 14px; font-weight: 500;">
+                            <option value="">Select new status...</option>
+                            {% if order.status == 'Pending' %}
+                                <option value="Processing">Processing</option>
+                                <option value="Cancelled">Cancelled</option>
+                            {% elif order.status == 'Processing' %}
+                                <option value="Delivered">Delivered</option>
+                            {% elif order.status == 'Delivered' %}
+                                <option value="Received">Received</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="btn accent" onclick="return confirm('Confirm status update?');">
+                            Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
             
             <div style="margin-bottom: 16px;">
                 <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">Order Date</p>
@@ -110,4 +138,5 @@
     <a href="{{ url_for('orders') }}" class="btn ghost">← Back to Orders</a>
     <a href="{{ url_for('products') }}" class="btn accent">View All Products</a>
 </div>
+
 {% endblock %}

@@ -1,3 +1,17 @@
+"""
+================================================================================
+CELLAR SOCIETY - E-Commerce Management System
+================================================================================
+Admin Side - Flask Application
+CPE 6 2nd Year Final Project
+
+Data Structures Used:
+1. Hash Table (Dictionary) - O(1) product lookup
+2. Binary Search Tree - O(log n) searching/filtering
+3. Queue - O(1) order processing (for customer side integration)
+4. Stack - O(1) browsing history (for customer side integration)
+================================================================================
+"""
 
 # ============================================
 # IMPORTS
@@ -6,8 +20,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from datetime import datetime
+from werkzeug.utils import secure_filename
+from PIL import Image
 import sqlite3
 import hashlib
+import os
 
 
 # ============================================
@@ -15,7 +32,50 @@ import hashlib
 # ============================================
 
 app = Flask(__name__)
-app.secret_key = 'cellar_society_secret_2025'
+app.secret_key = 'cellar_society_admin_secret_2024'  # Different secret key from customer
+app.config['SESSION_COOKIE_NAME'] = 'admin_session'  # Different cookie name
+
+
+# File upload configuration
+UPLOAD_FOLDER = 'static/uploads/wines'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+# Create upload directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+# ============================================
+# HELPER FUNCTIONS FOR FILE UPLOAD
+# ============================================
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_wine_image(file):
+    """
+    Save uploaded wine image to static folder
+    Returns: relative path to saved image or None if failed
+    """
+    if file and allowed_file(file.filename):
+        # Create secure filename with timestamp to avoid duplicates
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"{name}_{timestamp}{ext}"
+        
+        # Save file
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(filepath)
+        
+        # Return relative path for database storage
+        return f"/static/uploads/wines/{unique_filename}"
+    return None
 
 
 # ============================================
@@ -80,14 +140,14 @@ def init_db():
     # Create default admin if not exists
     c.execute("SELECT * FROM admins WHERE username='admin'")
     if not c.fetchone():
-        # Password: admin123 (hashed with SHA-256)
-        hashed_pw = hashlib.sha256('admin123'.encode()).hexdigest()
+        # Password: admin456 (hashed with SHA-256)
+        hashed_pw = hashlib.sha256('admin456'.encode()).hexdigest()
         c.execute("INSERT INTO admins (username, password) VALUES (?, ?)", 
                  ('admin', hashed_pw))
     
     conn.commit()
     conn.close()
-    print("Database initialized successfully!")
+    print("✅ Database initialized successfully!")
 
 
 def get_db_connection():
@@ -105,28 +165,53 @@ def get_db_connection():
 # ============================================
 
 class ProductHashTable:
+    """
+    Hash Table implementation for O(1) product lookup by ID
+    
+    Purpose: Quick product retrieval in admin panel
+    Time Complexity: O(1) for insert, get, delete
+    Space Complexity: O(n) where n is number of products
+    
+    Implementation: Uses Python dictionary (built-in hash table)
+    Key: product_id (integer)
+    Value: product_data (dictionary with all product info)
+    """
     
     def __init__(self):
-        
+        """Initialize empty hash table"""
         self.table = {}
     
     def insert(self, product_id, product_data):
-
+        """
+        Insert product into hash table
+        Time Complexity: O(1) average case
+        """
         self.table[product_id] = product_data
     
     def get(self, product_id):
-
+        """
+        Get product by ID
+        Time Complexity: O(1) average case
+        Returns: product_data or None if not found
+        """
         return self.table.get(product_id, None)
     
     def delete(self, product_id):
-
+        """
+        Delete product from hash table
+        Time Complexity: O(1) average case
+        Returns: True if deleted, False if not found
+        """
         if product_id in self.table:
             del self.table[product_id]
             return True
         return False
     
     def get_all(self):
-
+        """
+        Get all products as list
+        Time Complexity: O(n)
+        """
         return list(self.table.values())
 
 
@@ -135,7 +220,10 @@ product_cache = ProductHashTable()
 
 
 def load_products_to_cache():
-
+    """
+    Load all products from database into hash table
+    Called after any product modification for cache consistency
+    """
     conn = sqlite3.connect('cellar_society.db')
     c = conn.cursor()
     c.execute("SELECT * FROM products")
@@ -166,6 +254,10 @@ def load_products_to_cache():
 # ============================================
 
 class Node:
+    """
+    Node class for Binary Search Tree
+    Each node contains product data and pointers to left/right children
+    """
     
     def __init__(self, product):
         self.product = product  # Product dictionary
@@ -174,20 +266,34 @@ class Node:
 
 
 class ProductBST:
+    """
+    Binary Search Tree implementation for O(log n) searching by price
+    
+    Purpose: Efficient product filtering and price-based searching
+    Time Complexity: 
+        - Insert: O(log n) average, O(n) worst case
+        - Search: O(log n) average, O(n) worst case
+    Space Complexity: O(n)
+    
+    Organization: Left subtree < parent < right subtree (by price)
+    """
     
     def __init__(self):
-    
+        """Initialize empty BST"""
         self.root = None
     
     def insert(self, product):
-        
+        """
+        Insert product into BST organized by price
+        Time Complexity: O(log n) average case
+        """
         if not self.root:
             self.root = Node(product)
         else:
             self._insert_recursive(self.root, product)
     
     def _insert_recursive(self, node, product):
-        
+        """Helper method for recursive insertion"""
         if product['price'] < node.product['price']:
             # Go left (smaller price)
             if node.left is None:
@@ -202,13 +308,17 @@ class ProductBST:
                 self._insert_recursive(node.right, product)
     
     def search_by_price_range(self, min_price, max_price):
-        
+        """
+        Search for products within price range
+        Time Complexity: O(log n + k) where k is number of results
+        Returns: List of products in price range
+        """
         results = []
         self._range_search(self.root, min_price, max_price, results)
         return results
     
     def _range_search(self, node, min_price, max_price, results):
-        
+        """Helper method for recursive range search"""
         if node is None:
             return
         
@@ -230,7 +340,10 @@ class ProductBST:
 # ============================================
 
 def login_required(f):
-    
+    """
+    Decorator to protect admin routes
+    Redirects to login if no active session
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_id' not in session:
@@ -246,7 +359,11 @@ def login_required(f):
 
 @app.route('/')
 def index():
-    
+    """
+    Landing page - redirects to appropriate page
+    If logged in: go to dashboard
+    If not logged in: go to login
+    """
     if 'admin_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
@@ -254,7 +371,11 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    
+    """
+    Admin login handler
+    GET: Display login form
+    POST: Validate credentials and create session
+    """
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -284,7 +405,10 @@ def login():
 
 @app.route('/logout')
 def logout():
-    
+    """
+    Admin logout handler
+    Clears session and redirects to login
+    """
     session.clear()
     flash('Logged out successfully', 'success')
     return redirect(url_for('login'))
@@ -297,7 +421,11 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    
+    """
+    Admin dashboard with statistics and recent orders
+    Displays: Total products, customers, orders, pending orders
+    Shows: 5 most recent orders
+    """
     conn = get_db_connection()
     
     # Get statistics
@@ -350,7 +478,11 @@ def dashboard():
 @app.route('/products')
 @login_required
 def products():
-    
+    """
+    View all products (wine inventory)
+    Note: Filtering happens client-side with JavaScript for better UX
+    Loads all products and updates hash table cache
+    """
     conn = get_db_connection()
     
     # Load ALL products (no server-side filtering)
@@ -369,7 +501,11 @@ def products():
 @app.route('/products/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
-    
+    """
+    Add new wine product
+    GET: Display add product form
+    POST: Insert product into database and hash table
+    """
     if request.method == 'POST':
         # Get form data
         name = request.form['name']
@@ -380,7 +516,18 @@ def add_product():
         alcohol = float(request.form['alcohol'])
         stock = int(request.form['stock'])
         description = request.form.get('description', '')
-        image_url = request.form.get('image_url', '')
+        
+        # Handle image upload
+        image_url = ''
+        if 'wine_image' in request.files:
+            file = request.files['wine_image']
+            if file and file.filename:
+                saved_path = save_wine_image(file)
+                if saved_path:
+                    image_url = saved_path
+                else:
+                    flash('Invalid image file format', 'error')
+                    return redirect(url_for('add_product'))
         
         # Insert into database
         conn = get_db_connection()
@@ -420,7 +567,11 @@ def add_product():
 @app.route('/products/edit/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def edit_product(product_id):
-    
+    """
+    Edit existing wine product
+    GET: Display edit form with current product data
+    POST: Update product in database and hash table
+    """
     conn = get_db_connection()
     
     if request.method == 'POST':
@@ -433,7 +584,28 @@ def edit_product(product_id):
         alcohol = float(request.form['alcohol'])
         stock = int(request.form['stock'])
         description = request.form.get('description', '')
-        image_url = request.form.get('image_url', '')
+        
+        # Get current product to preserve old image if no new one uploaded
+        current_product = conn.execute(
+            'SELECT image_url FROM products WHERE id = ?', 
+            (product_id,)
+        ).fetchone()
+        
+        image_url = current_product['image_url'] if current_product else ''
+        
+        # Handle image upload (only if new file is provided)
+        if 'wine_image' in request.files:
+            file = request.files['wine_image']
+            if file and file.filename:
+                saved_path = save_wine_image(file)
+                if saved_path:
+                    # Delete old image file if it exists
+                    if image_url and os.path.exists('.' + image_url):
+                        try:
+                            os.remove('.' + image_url)
+                        except:
+                            pass
+                    image_url = saved_path
         
         # Update database
         conn.execute('''
@@ -471,16 +643,26 @@ def edit_product(product_id):
 @app.route('/products/delete/<int:product_id>', methods=['POST'])
 @login_required
 def delete_product(product_id):
-    
+    """
+    Delete wine product
+    Removes from both database and hash table
+    """
     conn = get_db_connection()
     
-    # Get product name for flash message
+    # Get product details including image
     product = conn.execute(
-        'SELECT name FROM products WHERE id = ?', 
+        'SELECT name, image_url FROM products WHERE id = ?', 
         (product_id,)
     ).fetchone()
     
     if product:
+        # Delete image file if it exists
+        if product['image_url'] and os.path.exists('.' + product['image_url']):
+            try:
+                os.remove('.' + product['image_url'])
+            except:
+                pass
+        
         # Delete from database
         conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
         conn.commit()
@@ -503,7 +685,11 @@ def delete_product(product_id):
 @app.route('/customers')
 @login_required
 def customers():
-    
+    """
+    View all customer accounts
+    Admin can only VIEW customers (not create/edit)
+    Customers register through customer portal
+    """
     search = request.args.get('search', '')
     
     conn = get_db_connection()
@@ -527,7 +713,10 @@ def customers():
 @app.route('/customers/<int:customer_id>')
 @login_required
 def customer_detail(customer_id):
-   
+    """
+    View customer details and order history
+    Shows: Customer info + all orders placed by this customer
+    """
     conn = get_db_connection()
     
     # Get customer information
@@ -558,13 +747,17 @@ def customer_detail(customer_id):
 
 
 # ============================================
-# ROUTES - ORDER MANAGEMENT (View Only)
+# ROUTES - ORDER MANAGEMENT
 # ============================================
 
 @app.route('/orders')
 @login_required
 def orders():
-   
+    """
+    View all orders with optional status filtering
+    Admin can VIEW and UPDATE order status
+    Filter options: All, Pending, Processing, Delivered, Received
+    """
     status_filter = request.args.get('status', '')
     
     conn = get_db_connection()
@@ -597,10 +790,13 @@ def orders():
 @app.route('/orders/<int:order_id>')
 @login_required
 def order_detail(order_id):
-    
+    """
+    View complete order details
+    Shows: Order info, customer info, product info
+    """
     conn = get_db_connection()
     
-    # Get order with all related dataa
+    # Get order with all related data
     order = conn.execute('''
         SELECT o.*, 
                c.name as customer_name, c.email as customer_email,
@@ -622,6 +818,49 @@ def order_detail(order_id):
     return render_template('admin/order_detail.html', order=order)
 
 
+@app.route('/orders/update-status/<int:order_id>', methods=['POST'])
+@login_required
+def update_order_status(order_id):
+    """
+    Update order status
+    Admin can change: Pending → Processing → Delivered
+    """
+    new_status = request.form.get('status')
+    
+    # Valid statuses
+    valid_statuses = ['Pending', 'Processing', 'Delivered', 'Received', 'Cancelled']
+    
+    if new_status not in valid_statuses:
+        flash('Invalid status', 'error')
+        return redirect(url_for('orders'))
+    
+    conn = get_db_connection()
+    
+    # Get order details
+    order = conn.execute(
+        'SELECT * FROM orders WHERE id = ?',
+        (order_id,)
+    ).fetchone()
+    
+    if not order:
+        flash('Order not found', 'error')
+        conn.close()
+        return redirect(url_for('orders'))
+    
+    # Update status
+    conn.execute('''
+        UPDATE orders 
+        SET status = ?
+        WHERE id = ?
+    ''', (new_status, order_id))
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f'Order #{order_id} status updated to {new_status}', 'success')
+    return redirect(url_for('orders'))
+
+
 # ============================================
 # APPLICATION STARTUP
 # ============================================
@@ -635,10 +874,10 @@ if __name__ == '__main__':
     
     # Print startup messages
     print("=" * 60)
-    print(" Cellar Society Admin Panel Starting...")
+    print("🍷 Cellar Society Admin Panel Starting...")
     print("=" * 60)
-    print(" Access at: http://localhost:5000")
-    print(" Default Login:")
+    print("🔗 Access at: http://localhost:5000")
+    print("👤 Default Login:")
     print("   Username: admin")
     print("   Password: admin456")
     print("=" * 60)

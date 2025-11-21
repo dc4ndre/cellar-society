@@ -37,6 +37,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Image</th>
                     <th>ID</th>
                     <th>Wine Name</th>
                     <th>Type</th>
@@ -51,10 +52,64 @@
             <tbody id="productTableBody">
                 {% for product in products %}
                 <tr>
+                    <td>
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" 
+                             alt="{{ product.name }}" 
+                             style="width: 60px; height: 80px; object-fit: contain; border-radius: 8px; border: 2px solid var(--accent); background: white; padding: 2px;">
+                        {% else %}
+                        <div style="width: 60px; height: 80px; background: rgba(198, 166, 100, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 24px;">
+                            🍷
+                        </div>
+                        {% endif %}
+                    </td>
                     <td><strong>#{{ product.id }}</strong></td>
                     <td><strong style="color: var(--primary);">{{ product.name }}</strong></td>
                     <td>
-                        <span class="badge primary">{{ product.type }}</span>
+                        {% if product.type == 'Red' %}
+                            <span style="background: linear-gradient(135deg, #8B0000, #DC143C); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Red
+                            </span>
+
+                        {% elif product.type == 'White' %}
+                            <span style="background: linear-gradient(135deg, #F5DEB3, #FFD700); color: #5a2a27; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                White
+                            </span>
+
+                        {% elif product.type == 'Rosé' %}
+                            <span style="background: linear-gradient(135deg, #FFB6C1, #FF69B4); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Rosé
+                            </span>
+
+                        {% elif product.type == 'Sparkling' %}
+                            <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Sparkling
+                            </span>
+
+                        {% elif product.type == 'Dessert' %}
+                            <span style="background: linear-gradient(135deg, #D2691E, #8B4513); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Dessert
+                            </span>
+
+                        {% elif product.type == 'Fortified' %}
+                            <span style="background: linear-gradient(135deg, #654321, #8B4513); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Fortified
+                            </span>
+
+                        {% else %}
+                            <span style="background: linear-gradient(135deg, var(--primary), #6a302c); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                {{ product.type }}
+                            </span>
+                        {% endif %}
+                    </td>
+
                     </td>
                     <td>{{ product.region }}</td>
                     <td>{{ product.vintage }}</td>
@@ -116,9 +171,9 @@ function filterProducts() {
         const cells = row.getElementsByTagName('td');
         
         if (cells.length > 0) {
-            const wineName = cells[1].textContent.toLowerCase();
-            const wineType = cells[2].textContent.toLowerCase();
-            const wineRegion = cells[3].textContent.toLowerCase();
+            const wineName = cells[2].textContent.toLowerCase(); // Changed from 1 to 2 (because of image column)
+            const wineType = cells[3].textContent.toLowerCase(); // Changed from 2 to 3
+            const wineRegion = cells[4].textContent.toLowerCase(); // Changed from 3 to 4
             
             // Check if matches search term (name OR region)
             const matchesSearch = wineName.includes(searchValue) || wineRegion.includes(searchValue);

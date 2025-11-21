@@ -1,0 +1,173 @@
+{% extends "customer/base.html" %}
+
+{% block title %}Shopping Cart - Cellar Society{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
+        Shopping Cart
+    </h2>
+    <p style="color: var(--muted); font-size: 1.1em;">Review your selected wines</p>
+</div>
+    
+{% if cart %}
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Cart Items -->
+    <div>
+        {% for item_id, item in cart.items() %}
+        <div class="card" style="margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: 20px; align-items: center;">
+                <!-- Product Image -->
+                <div>
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" 
+                         style="width: 100%; height: 130px; object-fit: contain; border-radius: 8px; background: white; padding: 4px; border: 1px solid #e5e0da;">
+                    {% else %}
+                    <div style="width: 100%; height: 130px; background: rgba(198, 166, 100, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                        🍷
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Info -->
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 8px; font-size: 1.2em;">
+                        <a href="{{ url_for('product_detail', product_id=item.id) }}" 
+                           style="text-decoration: none; color: inherit;">
+                            {{ item.name }}
+                        </a>
+                    </h3>
+                    <p style="color: var(--accent); font-weight: 700; font-size: 1.3em; margin: 8px 0;">
+                        ₱{{ "%.2f"|format(item.price) }}
+                    </p>
+                    <p style="color: var(--primary); font-weight: 600; font-size: 1.1em;">
+                        Subtotal: ₱{{ "%.2f"|format(item.price * item.quantity) }}
+                    </p>
+                    {% if item.stock <= 5 %}
+                    <p style="color: var(--danger); font-size: 13px; margin-top: 4px;">
+                        Only {{ item.stock }} left in stock!
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Quantity Controls -->
+                <div style="text-align: right;">
+                    <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-bottom: 12px;">
+                        <!-- Minus Button -->
+                        <form method="POST" action="{{ url_for('update_cart', product_id=item.id) }}" style="display: inline;">
+                            <input type="hidden" name="quantity" value="{{ item.quantity - 1 }}">
+                            {% if item.quantity <= 1 %}
+                            <button type="submit" disabled
+                                    style="width: 36px; height: 36px; border: 1px solid #e5e0da; background: white; cursor: not-allowed; font-size: 18px; font-weight: bold; color: var(--primary); border-radius: 6px; transition: all 0.2s; opacity: 0.5;">
+                                −
+                            </button>
+                            {% else %}
+                            <button type="submit"
+                                    style="width: 36px; height: 36px; border: 1px solid #e5e0da; background: white; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--primary); border-radius: 6px; transition: all 0.2s;">
+                                −
+                            </button>
+                            {% endif %}
+                        </form>
+                        
+                        <!-- Quantity Display -->
+                        <span style="display: inline-block; width: 50px; text-align: center; font-weight: 600; font-size: 16px; padding: 8px; background: #f9f8f7; border-radius: 4px;">
+                            {{ item.quantity }}
+                        </span>
+                        
+                        <!-- Plus Button -->
+                        <form method="POST" action="{{ url_for('update_cart', product_id=item.id) }}" style="display: inline;">
+                            <input type="hidden" name="quantity" value="{{ item.quantity + 1 }}">
+                            {% if item.quantity >= item.stock %}
+                            <button type="submit" disabled
+                                    style="width: 36px; height: 36px; border: 1px solid #e5e0da; background: white; cursor: not-allowed; font-size: 18px; font-weight: bold; color: var(--primary); border-radius: 6px; transition: all 0.2s; opacity: 0.5;">
+                                +
+                            </button>
+                            {% else %}
+                            <button type="submit"
+                                    style="width: 36px; height: 36px; border: 1px solid #e5e0da; background: white; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--primary); border-radius: 6px; transition: all 0.2s;">
+                                +
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                    
+                    <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">Max: {{ item.stock }}</p>
+                    
+                    <a href="{{ url_for('remove_from_cart', product_id=item.id) }}" 
+                       class="btn btn-small danger"
+                       onclick="return confirm('Remove this item from cart?');">
+                        Remove
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <a href="{{ url_for('shop') }}" class="btn ghost" style="width: 100%;">
+            ← Continue Shopping
+        </a>
+    </div>
+
+    <!-- Order Summary -->
+    <div>
+        <div class="card" style="position: sticky; top: 100px;">
+            <h3 style="color: var(--primary); margin-bottom: 20px; font-size: 1.5em;">Order Summary</h3>
+            
+            <div style="padding: 16px 0; border-top: 1px solid #e5e0da; border-bottom: 1px solid #e5e0da; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Items:</span>
+                    <span style="font-weight: 600;">{{ cart|length }} item(s)</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Total Bottles:</span>
+                    <span style="font-weight: 600;">{{ cart_count }} bottle(s)</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Subtotal:</span>
+                    <span style="font-weight: 600;">₱{{ "%.2f"|format(total) }}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="color: var(--muted);">Delivery:</span>
+                    <span style="font-weight: 600; color: var(--success);">FREE</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+                <span style="font-size: 1.2em; font-weight: 600; color: var(--primary);">Total:</span>
+                <span style="font-size: 1.8em; font-weight: 700; color: var(--accent);">₱{{ "%.2f"|format(total) }}</span>
+            </div>
+
+            {% if session.customer_id %}
+                <a href="{{ url_for('checkout') }}" class="btn accent" style="width: 100%; text-align: center; font-size: 16px;">
+                    Proceed to Checkout →
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn primary" style="width: 100%; text-align: center; font-size: 16px;">
+                    Login to Checkout
+                </a>
+                <p style="text-align: center; margin-top: 12px; font-size: 13px; color: var(--muted);">
+                    Please login to complete your purchase
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Empty Cart -->
+<div class="card" style="text-align: center; padding: 80px 20px;">
+    <div style="font-size: 80px; margin-bottom: 24px;">🛒</div>
+    <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">Your Cart is Empty</h3>
+    <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">
+        Browse our premium wine collection and add your favorites!
+    </p>
+    <a href="{{ url_for('shop') }}" class="btn accent" style="font-size: 16px;">
+        Start Shopping →
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

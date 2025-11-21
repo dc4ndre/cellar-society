@@ -9,7 +9,7 @@
 </div>
 
 <div class="card" style="max-width: 900px; margin: 0 auto;">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="form-row">
             <div class="form-group">
                 <label>Wine Name *</label>
@@ -38,7 +38,7 @@
 
             <div class="form-group">
                 <label>Vintage Year *</label>
-                <input type="number" name="vintage" placeholder="e.g., 2015" min="1000" max="2025" required>
+                <input type="number" name="vintage" placeholder="e.g., 2015" min="1900" max="2024" required>
             </div>
         </div>
 
@@ -65,8 +65,12 @@
         </div>
 
         <div class="form-group">
-            <label>Image URL (Optional)</label>
-            <input type="url" name="image_url" placeholder="https://example.com/wine-image.jpg">
+            <label>Wine Image *</label>
+            <input type="file" name="wine_image" accept="image/*" required 
+                   style="padding: 10px; border: 2px dashed var(--accent); background: rgba(198, 166, 100, 0.05); cursor: pointer;">
+            <small style="color: var(--muted); font-size: 13px; display: block; margin-top: 6px;">
+                📷 Upload wine bottle image (PNG, JPG, JPEG, GIF, WEBP - Max 16MB)
+            </small>
         </div>
 
         <div style="display: flex; gap: 12px; margin-top: 28px;">
@@ -76,5 +80,18 @@
     </form>
 </div>
 
-
+<!-- Sample Wines Guide -->
+<div class="card" style="max-width: 900px; margin: 24px auto; background: rgba(198, 166, 100, 0.05);">
+    <h3>🍷 Sample Wine Data (for testing)</h3>
+    <div style="font-size: 14px; line-height: 1.8;">
+        <p><strong>Example 1:</strong></p>
+        <p>Name: Château Margaux 2015 | Type: Red | Region: Bordeaux, France | Vintage: 2015 | Price: 599.99 | Alcohol: 13.5% | Stock: 12</p>
+        
+        <p style="margin-top: 12px;"><strong>Example 2:</strong></p>
+        <p>Name: Dom Pérignon Vintage 2012 | Type: Sparkling | Region: Champagne, France | Vintage: 2012 | Price: 299.99 | Alcohol: 12.5% | Stock: 8</p>
+        
+        <p style="margin-top: 12px;"><strong>Example 3:</strong></p>
+        <p>Name: Cloudy Bay Sauvignon Blanc | Type: White | Region: Marlborough, New Zealand | Vintage: 2021 | Price: 45.99 | Alcohol: 13.0% | Stock: 24</p>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,261 @@
+{% extends "customer/base.html" %}
+
+{% block title %}My Profile - Cellar Society{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
+        My Profile
+    </h2>
+    <p style="color: var(--muted); font-size: 1.1em;">Manage your account information</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Profile Information -->
+    <div class="card">
+        <h3 style="color: var(--primary); margin-bottom: 20px;">Account Information</h3>
+        
+        <form method="POST" action="{{ url_for('edit_profile') }}">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+                    Full Name *
+                </label>
+                <input type="text" name="name" value="{{ customer.name }}" required
+                       style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+                    Email Address
+                </label>
+                <input type="email" value="{{ customer.email }}" disabled
+                       style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px; background: #f4f3f2; color: var(--muted);">
+                <small style="color: var(--muted); font-size: 13px; display: block; margin-top: 4px;">
+                    Email cannot be changed
+                </small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+                    Phone Number
+                </label>
+                <input type="tel" name="phone" value="{{ customer.phone if customer.phone else '' }}" 
+                       placeholder="Enter phone number"
+                       style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+                    Delivery Address
+                </label>
+                <textarea name="address" rows="4" placeholder="Enter your complete delivery address"
+                          style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px; resize: vertical;">{{ customer.address if customer.address else '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn primary" style="width: 100%;">
+                Save Changes
+            </button>
+        </form>
+    </div>
+
+    <!-- Account Details & Stats -->
+    <div>
+        <div class="card" style="margin-bottom: 20px;">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">Account Details</h3>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">CUSTOMER ID</p>
+                <p style="font-weight: 600; color: var(--primary);">#{{ customer.id }}</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">MEMBER SINCE</p>
+                <p style="font-weight: 600;">{{ customer.joined_at[:10] }}</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">ACCOUNT STATUS</p>
+                <span class="badge success">✓ Active</span>
+            </div>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, var(--primary) 0%, #6a302c 100%); color: white;">
+            <h3 style="margin-bottom: 16px; opacity: 0.9;">Membership Benefits</h3>
+            <ul style="line-height: 2; padding-left: 20px;">
+                <li>Free delivery on all orders</li>
+                <li>Access to exclusive wines</li>
+                <li>Early access to new arrivals</li>
+                <li>Special member discounts</li>
+                <li>Priority customer support</li>
+            </ul>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+            <h3 style="color: var(--primary); margin-bottom: 16px;">Change Password</h3>
+            
+            <form method="POST" action="{{ url_for('change_password') }}">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; color: var(--primary); font-weight: 600; font-size: 13px;">
+                        Current Password
+                    </label>
+                    <input type="password" name="current_password" required placeholder="Enter current password"
+                           style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 14px;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; color: var(--primary); font-weight: 600; font-size: 13px;">
+                        New Password
+                    </label>
+                    <input type="password" name="new_password" required minlength="6" placeholder="Enter new password"
+                           style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 14px;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; color: var(--primary); font-weight: 600; font-size: 13px;">
+                        Confirm New Password
+                    </label>
+                    <input type="password" name="confirm_password" required minlength="6" placeholder="Confirm new password"
+                           style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 14px;">
+                </div>
+                
+                <button type="submit" class="btn accent" style="width: 100%;">
+                    Change Password
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Browsing History Section -->
+<div class="card" style="margin-top: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: var(--primary); margin: 0;">Recently Viewed Wines (Stack - LIFO)</h3>
+        {% if browsing_history %}
+        <form method="POST" action="{{ url_for('clear_history') }}" style="display: inline;">
+            <button type="submit" class="btn btn-small danger" onclick="return confirm('Clear all browsing history?');">
+                Clear History
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if browsing_history %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        {% for product in browsing_history %}
+        <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+           style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;"
+           onmouseover="this.style.transform='translateY(-4px)'"
+           onmouseout="this.style.transform=''">
+            <div style="border: 2px solid #e5e0da; border-radius: 8px; padding: 12px; background: white; height: 100%;">
+                <!-- Product Image -->
+                <div style="text-align: center; margin-bottom: 12px;">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                         style="width: 100%; height: 150px; object-fit: cover; border-radius: 6px;">
+                    {% else %}
+                    <div style="width: 100%; height: 150px; background: rgba(198, 166, 100, 0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                        🍷
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Product Info -->
+                <span class="badge primary" style="font-size: 11px; padding: 4px 8px; margin-bottom: 6px;">{{ product.type }}</span>
+                <h4 style="color: var(--primary); margin: 6px 0; font-size: 14px; font-weight: 600; line-height: 1.3;">
+                    {{ product.name }}
+                </h4>
+                <p style="color: var(--muted); font-size: 12px; margin: 4px 0;">
+                    {{ product.region }}
+                </p>
+                <p style="color: var(--accent); font-weight: 700; font-size: 16px; margin: 8px 0;">
+                    ₱{{ "%.2f"|format(product.price) }}
+                </p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <p style="text-align: center; margin-top: 20px; color: var(--muted); font-size: 13px;">
+        Showing last {{ browsing_history|length }} viewed product(s) • Using Stack (LIFO - Last In, First Out)
+    </p>
+    {% else %}
+    <div style="text-align: center; padding: 40px 20px; background: rgba(198, 166, 100, 0.05); border-radius: 8px;">
+        <div style="font-size: 50px; margin-bottom: 12px;">👀</div>
+        <h4 style="color: var(--primary); margin-bottom: 8px;">No Browsing History Yet</h4>
+        <p style="color: var(--muted); font-size: 14px;">
+            Products you view will appear here for easy access
+        </p>
+        <a href="{{ url_for('shop') }}" class="btn accent" style="margin-top: 16px; font-size: 14px;">
+            Browse Wines
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="background: rgba(198, 166, 100, 0.05); margin-top: 24px;">
+    <h3 style="color: var(--primary); margin-bottom: 20px;">Quick Actions</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="{{ url_for('shop') }}" class="btn accent">Browse Wines</a>
+        <a href="{{ url_for('my_orders') }}" class="btn primary">View Orders</a>
+        <a href="{{ url_for('view_cart') }}" class="btn ghost">View Cart</a>
+    </div>
+</div>
+
+<!-- Danger Zone - Delete Account -->
+<div class="card" style="border: 2px solid var(--danger); margin-top: 24px;">
+    <h3 style="color: var(--danger); margin-bottom: 16px;">⚠️ Danger Zone</h3>
+    <p style="color: var(--muted); margin-bottom: 20px; line-height: 1.8;">
+        Once you delete your account, there is no going back. All your order history and personal data will be permanently removed. 
+        <strong style="color: var(--danger);">You cannot delete your account if you have pending or processing orders.</strong>
+    </p>
+    
+    <details style="margin-bottom: 16px;">
+        <summary style="cursor: pointer; color: var(--danger); font-weight: 600; padding: 12px; background: rgba(220, 53, 69, 0.05); border-radius: 6px;">
+            Click here to delete your account
+        </summary>
+        
+        <form method="POST" action="{{ url_for('delete_account') }}" style="margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid var(--warning);">
+            <p style="color: #856404; font-weight: 600; margin-bottom: 16px;">
+                ⚠️ This action cannot be undone!
+            </p>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; color: var(--danger); font-weight: 600; font-size: 13px;">
+                    Type "DELETE" to confirm
+                </label>
+                <input type="text" name="confirm_text" required placeholder='Type DELETE in capital letters'
+                       style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 2px solid var(--danger); font-family: 'Poppins'; font-size: 14px;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; color: var(--danger); font-weight: 600; font-size: 13px;">
+                    Enter your password to confirm
+                </label>
+                <input type="password" name="password" required placeholder="Enter your password"
+                       style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 2px solid var(--danger); font-family: 'Poppins'; font-size: 14px;">
+            </div>
+            
+            <button type="submit" class="btn danger" style="width: 100%;"
+                    onclick="return confirm('Are you absolutely sure? This action CANNOT be undone!');">
+                Permanently Delete My Account
+            </button>
+        </form>
+    </details>
+</div>
+
+<script>
+// Password validation
+document.querySelector('form[action="{{ url_for("change_password") }}"]').addEventListener('submit', function(e) {
+    const newPassword = document.querySelector('input[name="new_password"]').value;
+    const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+    
+    if (newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('New passwords do not match!');
+    }
+});
+</script>
+
+{% endblock %}

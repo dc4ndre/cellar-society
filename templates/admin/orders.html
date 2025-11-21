@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Order Management</h2>
-    <p>View customer orders (Order processing queue managed by customer side)</p>
+    <p>View and manage customer orders</p>
 </div>
 
 <!-- Filter Bar -->
@@ -52,27 +52,91 @@
                     <td>{{ order.customer_name }}</td>
                     <td>{{ order.customer_email }}</td>
                     <td><strong>{{ order.product_name }}</strong></td>
-                    <td><span class="badge primary">{{ order.product_type }}</span></td>
+                    <td>
+                        {% if order.product_type == 'Red' %}
+                            <span style="background: linear-gradient(135deg, #8B0000, #DC143C); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Red
+                            </span>
+
+                        {% elif order.product_type == 'White' %}
+                            <span style="background: linear-gradient(135deg, #F5DEB3, #FFD700); color: #5a2a27; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                White
+                            </span>
+
+                        {% elif order.product_type == 'Rosé' %}
+                            <span style="background: linear-gradient(135deg, #FFB6C1, #FF69B4); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Rosé
+                            </span>
+
+                        {% elif order.product_type == 'Sparkling' %}
+                            <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Sparkling
+                            </span>
+
+                        {% elif order.product_type == 'Dessert' %}
+                            <span style="background: linear-gradient(135deg, #D2691E, #8B4513); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Dessert
+                            </span>
+
+                        {% elif order.product_type == 'Fortified' %}
+                            <span style="background: linear-gradient(135deg, #654321, #8B4513); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                Fortified
+                            </span>
+
+                        {% else %}
+                            <span style="background: linear-gradient(135deg, var(--primary), #6a302c); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; 
+                            text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                {{ order.product_type }}
+                            </span>
+                        {% endif %}
+                    </td>
+
                     <td>{{ order.quantity }}</td>
                     <td><strong>₱{{ "%.2f"|format(order.total_price) }}</strong></td>
                     <td>
                         {% if order.status == 'Pending' %}
-                            <span class="badge warning">⏳ {{ order.status }}</span>
+                            <span class="badge warning">{{ order.status }}</span>
                         {% elif order.status == 'Processing' %}
-                            <span class="badge primary">🔄 {{ order.status }}</span>
+                            <span class="badge primary">{{ order.status }}</span>
                         {% elif order.status == 'Delivered' %}
-                            <span class="badge success">🚚 {{ order.status }}</span>
+                            <span class="badge success">{{ order.status }}</span>
                         {% elif order.status == 'Received' %}
-                            <span class="badge success">✅ {{ order.status }}</span>
+                            <span class="badge success">{{ order.status }}</span>
                         {% elif order.status == 'Cancelled' %}
-                            <span class="badge danger">❌ {{ order.status }}</span>
+                            <span class="badge danger">{{ order.status }}</span>
                         {% else %}
                             <span class="badge">{{ order.status }}</span>
                         {% endif %}
                     </td>
                     <td>{{ order.order_date[:10] }}</td>
                     <td>
-                        <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-small primary">View Details</a>
+                        <div class="actions">
+                            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-small primary">View</a>
+                            
+                            <!-- Status Update Dropdown -->
+                            {% if order.status not in ['Received', 'Cancelled'] %}
+                            <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}" style="display: inline;">
+                                <select name="status" onchange="if(confirm('Update order status?')) this.form.submit();" 
+                                        style="padding: 6px 10px; border-radius: 6px; border: 2px solid var(--accent); font-size: 13px; font-weight: 500; cursor: pointer;">
+                                    <option value="">Update Status</option>
+                                    {% if order.status == 'Pending' %}
+                                        <option value="Processing">→ Processing</option>
+                                        <option value="Cancelled">→ Cancelled</option>
+                                    {% elif order.status == 'Processing' %}
+                                        <option value="Delivered">→ Delivered</option>
+                                    {% elif order.status == 'Delivered' %}
+                                        <option value="Received">→ Received</option>
+                                    {% endif %}
+                                </select>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -88,5 +152,22 @@
     {% endif %}
 </div>
 
+<!-- Order Status Workflow Guide -->
+<div class="card" style="background: rgba(198, 166, 100, 0.05);">
+    <h3> Order Status Workflow</h3>
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+        <span class="badge warning" style="font-size: 14px; padding: 8px 14px;">Pending</span>
+        <span style="font-size: 20px; color: var(--accent);">→</span>
+        <span class="badge primary" style="font-size: 14px; padding: 8px 14px;">Processing</span>
+        <span style="font-size: 20px; color: var(--accent);">→</span>
+        <span class="badge success" style="font-size: 14px; padding: 8px 14px;">Delivered</span>
+        <span style="font-size: 20px; color: var(--accent);">→</span>
+        <span class="badge success" style="font-size: 14px; padding: 8px 14px;">Received</span>
+    </div>
+    <p style="margin-top: 16px; color: var(--muted); font-size: 14px; line-height: 1.8;">
+        <strong>Admin Actions:</strong> Update order status from Pending → Processing → Delivered. 
+        Customer confirms receipt to mark as "Received". Orders can be cancelled only when in Pending status.
+    </p>
+</div>
 
 {% endblock %}
