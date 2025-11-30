@@ -139,12 +139,22 @@
             <div style="display: flex; gap: 20px; align-items: center;">
                 <div>
                     <span style="color: var(--muted); font-size: 12px;">ORDER NUMBER</span>
-                    <p style="font-weight: 600; color: var(--primary); margin: 0;">#{{ loop.index }}</p>
+                    <p style="font-weight: 600; color: var(--primary); margin: 0;">#{{ order.id }}</p>
                 </div>
                 <div>
                     <span style="color: var(--muted); font-size: 12px;">ORDER DATE</span>
                     <p style="font-weight: 600; margin: 0;">{{ order.order_date[:10] }}</p>
                 </div>
+                
+                <!-- Show estimated delivery date if status is Processing or Delivered -->
+                {% if order.status in ['Processing', 'Delivered'] and order.estimated_delivery_date %}
+                <div>
+                    <span style="color: var(--muted); font-size: 12px;">ESTIMATED DELIVERY</span>
+                    <p style="font-weight: 600; margin: 0; color: var(--accent);">
+                        {{ order.estimated_delivery_date }}
+                    </p>
+                </div>
+                {% endif %}
             </div>
             
             <!-- Status Badge -->
@@ -199,9 +209,19 @@
                 {% if order.status == 'Pending' %}
                     <p style="color: var(--muted); font-size: 13px; margin: 0;">Your order is being processed. Please complete the payment.</p>
                 {% elif order.status == 'Processing' %}
-                    <p style="color: var(--muted); font-size: 13px; margin: 0;">Your order is being packed and prepared for shipment</p>
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">
+                        Your order is being packed and prepared for shipment. 
+                        {% if order.estimated_delivery_date %}
+                        <br><strong style="color: var(--accent);">Expected delivery: {{ order.estimated_delivery_date }} (3-5 days)</strong>
+                        {% endif %}
+                    </p>
                 {% elif order.status == 'Delivered' %}
-                    <p style="color: var(--muted); font-size: 13px; margin: 0;">Order has been delivered. Please confirm receipt.</p>
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">
+                        Order has been delivered. Please confirm receipt.
+                        {% if order.estimated_delivery_date %}
+                        <br><span style="color: var(--muted);">Estimated delivery was: {{ order.estimated_delivery_date }}</span>
+                        {% endif %}
+                    </p>
                 {% elif order.status == 'Received' %}
                     <p style="color: var(--success); font-size: 13px; margin: 0;">Order completed. Thank you for your purchase!</p>
                 {% elif order.status == 'Cancelled' %}
@@ -245,27 +265,27 @@
 <!-- Empty State -->
 <div class="card" style="text-align: center; padding: 80px 20px;">
     {% if status_filter == 'Pending' %}
-        <div style="font-size: 80px; margin-bottom: 24px;">💰</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Pay</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You don't have any pending payments</p>
     {% elif status_filter == 'Processing' %}
-        <div style="font-size: 80px; margin-bottom: 24px;">📦</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Ship</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">No orders are currently being prepared</p>
     {% elif status_filter == 'Delivered' %}
-        <div style="font-size: 80px; margin-bottom: 24px;">🚚</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders to Receive</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">No orders are waiting for your confirmation</p>
     {% elif status_filter == 'Received' %}
-        <div style="font-size: 80px; margin-bottom: 24px;">⭐</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Completed Orders</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You haven't completed any orders yet</p>
     {% elif status_filter == 'Cancelled' %}
-        <div style="font-size: 80px; margin-bottom: 24px;">❌</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Cancelled Orders</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You don't have any cancelled orders</p>
     {% else %}
-        <div style="font-size: 80px; margin-bottom: 24px;">📋</div>
+        
         <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">No Orders Yet</h3>
         <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">You haven't placed any orders. Start shopping for premium wines!</p>
     {% endif %}

@@ -166,6 +166,20 @@
             text-decoration: underline;
         }
 
+        .required-note {
+            background: rgba(198, 166, 100, 0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 24px;
+        }
+
+        .required-note p {
+            font-size: 13px;
+            color: var(--primary);
+            margin: 0;
+        }
+
         @media(max-width: 600px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -178,6 +192,10 @@
         <div class="brand">
             <h1>Cellar Society</h1>
             <small>Create Your Account</small>
+        </div>
+
+        <div class="required-note">
+            <p><strong>📋 Important:</strong> Phone number and delivery address are required for order processing and delivery.</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -212,13 +230,13 @@
             </div>
 
             <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" name="phone" placeholder="Enter your phone number (optional)">
+                <label>Phone Number *</label>
+                <input type="tel" name="phone" placeholder="Enter your phone number (e.g., 09123456789)" required>
             </div>
 
             <div class="form-group">
-                <label>Delivery Address</label>
-                <textarea name="address" placeholder="Enter your complete delivery address (optional)"></textarea>
+                <label>Delivery Address *</label>
+                <textarea name="address" placeholder="Enter your complete delivery address (House No., Street, Barangay, City, Province)" required></textarea>
             </div>
 
             <button type="submit" class="btn">Create Account</button>

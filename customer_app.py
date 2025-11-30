@@ -8,7 +8,9 @@ CPE 6 2nd Year Final Project
 Data Structures Used:
 1. Queue - O(1) order processing and checkout
 2. Stack - O(1) browsing history navigation
-3. Hash Table - O(1) cart management
+3. Stack - O(1) search history
+4. Hash Table - O(1) cart management
+5. BST - O(log n) product recommendations
 ================================================================================
 """
 
@@ -18,12 +20,11 @@ Data Structures Used:
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import deque
 import sqlite3
 import hashlib
 import os
-
 
 # ============================================
 # APP CONFIGURATION
@@ -32,7 +33,6 @@ import os
 app = Flask(__name__)
 app.secret_key = 'cellar_society_customer_secret_2024'
 app.config['SESSION_COOKIE_NAME'] = 'customer_session'
-
 
 # ============================================
 # DATABASE CONNECTION
@@ -43,7 +43,6 @@ def get_db_connection():
     conn = sqlite3.connect('cellar_society.db')
     conn.row_factory = sqlite3.Row
     return conn
-
 
 # ============================================
 # DATA STRUCTURES - QUEUE (Order Processing)
@@ -77,7 +76,6 @@ class OrderQueue:
         """Get queue size"""
         return len(self.queue)
 
-
 # ============================================
 # DATA STRUCTURES - STACK (Browsing History)
 # ============================================
@@ -94,7 +92,6 @@ class BrowsingHistory:
     
     def push(self, page_url):
         """Add page to history - O(1)"""
-        # Avoid duplicate consecutive entries
         if not self.stack or self.stack[-1] != page_url:
             self.stack.append(page_url)
     
@@ -118,6 +115,45 @@ class BrowsingHistory:
         """Clear all history"""
         self.stack.clear()
 
+# ============================================
+# DATA STRUCTURES - STACK (Search History)
+# ============================================
+
+class SearchHistory:
+    """
+    Stack implementation for search history
+    LIFO - Last In, First Out
+    Time Complexity: O(1) for push and pop
+    Stores recent search queries for autocomplete/suggestions
+    """
+    
+    def __init__(self, max_size=10):
+        self.stack = []
+        self.max_size = max_size
+    
+    def push(self, search_query):
+        """Add search query to history - O(1)"""
+        search_query = search_query.strip().lower()
+        
+        if search_query in self.stack:
+            self.stack.remove(search_query)
+        
+        self.stack.append(search_query)
+        
+        if len(self.stack) > self.max_size:
+            self.stack.pop(0)
+    
+    def get_recent(self, limit=5):
+        """Get recent searches - O(1)"""
+        return list(reversed(self.stack[-limit:]))
+    
+    def clear(self):
+        """Clear all search history"""
+        self.stack.clear()
+    
+    def get_all(self):
+        """Get all searches in reverse order (most recent first)"""
+        return list(reversed(self.stack))
 
 # ============================================
 # DATA STRUCTURES - HASH TABLE (Shopping Cart)
@@ -175,46 +211,148 @@ class ShoppingCart:
         """Empty the cart"""
         self.cart.clear()
 
+# ============================================
+# DATA STRUCTURES - BST (Recommendations)
+# ============================================
+
+class RecommendationNode:
+    """Node for recommendation BST organized by similarity score"""
+    def __init__(self, product, score):
+        self.product = product
+        self.score = score
+        self.left = None
+        self.right = None
+
+class RecommendationBST:
+    """
+    Binary Search Tree for product recommendations
+    Organized by similarity score for efficient retrieval
+    Time Complexity: O(log n) for insertion and retrieval
+    """
+    
+    def __init__(self):
+        self.root = None
+        self.recommendations = []
+    
+    def insert(self, product, score):
+        """Insert recommendation with score - O(log n)"""
+        if not self.root:
+            self.root = RecommendationNode(product, score)
+        else:
+            self._insert_recursive(self.root, product, score)
+    
+    def _insert_recursive(self, node, product, score):
+        """Helper for recursive insertion"""
+        if score >= node.score:
+            if node.right is None:
+                node.right = RecommendationNode(product, score)
+            else:
+                self._insert_recursive(node.right, product, score)
+        else:
+            if node.left is None:
+                node.left = RecommendationNode(product, score)
+            else:
+                self._insert_recursive(node.left, product, score)
+    
+    def get_top_recommendations(self, limit=6):
+        """
+        Get top N recommendations (highest scores)
+        Uses in-order traversal in reverse to get highest scores first
+        Time Complexity: O(n) for traversal
+        """
+        self.recommendations = []
+        self._reverse_inorder(self.root, limit)
+        return self.recommendations[:limit]
+    
+    def _reverse_inorder(self, node, limit):
+        """Reverse in-order traversal (right -> node -> left) for highest scores first"""
+        if node is None or len(self.recommendations) >= limit:
+            return
+        
+        self._reverse_inorder(node.right, limit)
+        
+        if len(self.recommendations) < limit:
+            self.recommendations.append(node.product)
+        
+        self._reverse_inorder(node.left, limit)
+
+def calculate_similarity_score(viewed_product, candidate_product):
+    """
+    Calculate similarity score between two products
+    Score based on:
+    - Same type: +50 points
+    - Similar region: +30 points
+    - Similar price range: +20 points
+    """
+    score = 0
+    
+    if viewed_product['type'] == candidate_product['type']:
+        score += 50
+    
+    viewed_region = viewed_product['region'].lower()
+    candidate_region = candidate_product['region'].lower()
+    
+    viewed_words = set(viewed_region.split())
+    candidate_words = set(candidate_region.split())
+    common_words = viewed_words.intersection(candidate_words)
+    
+    if len(common_words) > 0:
+        score += 30
+    
+    price_diff = abs(viewed_product['price'] - candidate_product['price'])
+    avg_price = (viewed_product['price'] + candidate_product['price']) / 2
+    
+    if avg_price > 0:
+        diff_percentage = (price_diff / avg_price) * 100
+        if diff_percentage <= 20:
+            score += 20
+    
+    return score
+
+def get_recommendations_for_product(product_id, limit=6):
+    """
+    Get product recommendations based on last viewed product
+    Uses BST for efficient organization by similarity score
+    Returns: List of recommended products
+    """
+    conn = get_db_connection()
+    
+    viewed_product = conn.execute(
+        'SELECT * FROM products WHERE id = ?',
+        (product_id,)
+    ).fetchone()
+    
+    if not viewed_product:
+        conn.close()
+        return []
+    
+    all_products = conn.execute(
+        'SELECT * FROM products WHERE id != ? AND stock > 0',
+        (product_id,)
+    ).fetchall()
+    
+    conn.close()
+    
+    rec_bst = RecommendationBST()
+    
+    for product in all_products:
+        score = calculate_similarity_score(viewed_product, product)
+        
+        if score > 0:
+            product_dict = dict(product)
+            rec_bst.insert(product_dict, score)
+    
+    recommendations = rec_bst.get_top_recommendations(limit)
+    
+    return recommendations
 
 # Global instances
 order_queue = OrderQueue()
 browsing_history = BrowsingHistory()
-
-
-# ============================================
-# SESSION CART MANAGEMENT
-# ============================================
-
-def get_cart():
-    """Get shopping cart from session"""
-    if 'cart' not in session:
-        session['cart'] = {}
-    return session['cart']
-
-
-def save_cart(cart_dict):
-    """Save shopping cart to session"""
-    session['cart'] = cart_dict
-    session.modified = True
-
-
-def get_cart_total():
-    """Calculate total price of items in cart"""
-    cart = get_cart()
-    total = 0
-    for item in cart.values():
-        total += item['price'] * item['quantity']
-    return total
-
-
-def get_cart_count():
-    """Get total number of items in cart"""
-    cart = get_cart()
-    return sum(item['quantity'] for item in cart.values())
-
+search_history = SearchHistory()
 
 # ============================================
-# DECORATORS
+# DECORATORS (MUST BE BEFORE ROUTES THAT USE THEM)
 # ============================================
 
 def login_required(f):
@@ -227,6 +365,33 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ============================================
+# SESSION CART MANAGEMENT
+# ============================================
+
+def get_cart():
+    """Get shopping cart from session"""
+    if 'cart' not in session:
+        session['cart'] = {}
+    return session['cart']
+
+def save_cart(cart_dict):
+    """Save shopping cart to session"""
+    session['cart'] = cart_dict
+    session.modified = True
+
+def get_cart_total():
+    """Calculate total price of items in cart"""
+    cart = get_cart()
+    total = 0
+    for item in cart.values():
+        total += item['price'] * item['quantity']
+    return total
+
+def get_cart_count():
+    """Get total number of items in cart"""
+    cart = get_cart()
+    return sum(item['quantity'] for item in cart.values())
 
 # ============================================
 # ROUTES - HOME & SHOP
@@ -237,18 +402,34 @@ def index():
     """Landing page - redirect to shop"""
     return redirect(url_for('shop'))
 
-
 @app.route('/shop')
 def shop():
     """Main shop page - browse all wines"""
-    # Get filters from query params
     wine_type = request.args.get('type', '')
     search = request.args.get('search', '')
     sort = request.args.get('sort', 'newest')
     
+    # Track search query in history (Stack - LIFO)
+    if search and 'customer_id' in session:
+        if 'search_history' not in session:
+            session['search_history'] = []
+        
+        history = session['search_history']
+        search_lower = search.strip().lower()
+        
+        if search_lower in history:
+            history.remove(search_lower)
+        
+        history.append(search_lower)
+        
+        if len(history) > 10:
+            history = history[-10:]
+        
+        session['search_history'] = history
+        session.modified = True
+    
     conn = get_db_connection()
     
-    # Build query
     query = 'SELECT * FROM products WHERE stock > 0'
     params = []
     
@@ -257,29 +438,32 @@ def shop():
         params.append(wine_type)
     
     if search:
-        query += ' AND (name LIKE ? OR region LIKE ?)'
-        params.extend([f'%{search}%', f'%{search}%'])
+        query += ' AND (name LIKE ? OR region LIKE ? OR type LIKE ?)'
+        params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
     
-    # Sorting
     if sort == 'price_low':
         query += ' ORDER BY price ASC'
     elif sort == 'price_high':
         query += ' ORDER BY price DESC'
     elif sort == 'name':
         query += ' ORDER BY name ASC'
-    else:  # newest
+    else:
         query += ' ORDER BY created_at DESC'
     
     products = conn.execute(query, params).fetchall()
     conn.close()
+    
+    recent_searches = []
+    if 'customer_id' in session and 'search_history' in session:
+        recent_searches = list(reversed(session['search_history'][-5:]))
     
     return render_template('customer/shop.html', 
                          products=products,
                          wine_type=wine_type,
                          search=search,
                          sort=sort,
-                         cart_count=get_cart_count())
-
+                         cart_count=get_cart_count(),
+                         recent_searches=recent_searches)
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
@@ -312,10 +496,13 @@ def product_detail(product_id):
     session['browsing_history'] = history
     session.modified = True
     
+    # Get recommendations based on this product (BST)
+    recommendations = get_recommendations_for_product(product_id, limit=6)
+    
     return render_template('customer/product_detail.html', 
                          product=product,
-                         cart_count=get_cart_count())
-
+                         cart_count=get_cart_count(),
+                         recommendations=recommendations)
 
 # ============================================
 # ROUTES - AUTHENTICATION
@@ -329,11 +516,27 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
-        phone = request.form.get('phone', '')
-        address = request.form.get('address', '')
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
         
         if password != confirm_password:
             flash('Passwords do not match', 'error')
+            return redirect(url_for('register'))
+        
+        if not phone:
+            flash('Phone number is required for order delivery', 'error')
+            return redirect(url_for('register'))
+        
+        if not address:
+            flash('Delivery address is required for order delivery', 'error')
+            return redirect(url_for('register'))
+        
+        if len(phone) < 10:
+            flash('Please enter a valid phone number (at least 10 digits)', 'error')
+            return redirect(url_for('register'))
+        
+        if len(address) < 20:
+            flash('Please enter a complete delivery address (minimum 20 characters)', 'error')
             return redirect(url_for('register'))
         
         hashed_pw = hashlib.sha256(password.encode()).hexdigest()
@@ -363,7 +566,6 @@ def register():
     
     return render_template('customer/register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Customer login"""
@@ -392,7 +594,6 @@ def login():
     
     return render_template('customer/login.html')
 
-
 @app.route('/logout')
 def logout():
     """Customer logout"""
@@ -400,7 +601,6 @@ def logout():
     session.clear()
     flash('Logged out successfully', 'success')
     return redirect(url_for('login'))
-
 
 # ============================================
 # ROUTES - SHOPPING CART
@@ -445,7 +645,6 @@ def add_to_cart(product_id):
     
     return redirect(url_for('view_cart'))
 
-
 @app.route('/cart')
 def view_cart():
     """View shopping cart"""
@@ -456,7 +655,6 @@ def view_cart():
                          cart=cart, 
                          total=total,
                          cart_count=get_cart_count())
-
 
 @app.route('/cart/update/<int:product_id>', methods=['POST'])
 def update_cart(product_id):
@@ -476,7 +674,6 @@ def update_cart(product_id):
     save_cart(cart)
     return redirect(url_for('view_cart'))
 
-
 @app.route('/cart/remove/<int:product_id>')
 def remove_from_cart(product_id):
     """Remove item from cart"""
@@ -489,6 +686,120 @@ def remove_from_cart(product_id):
     save_cart(cart)
     return redirect(url_for('view_cart'))
 
+# ============================================
+# ROUTES - BUY NOW
+# ============================================
+
+@app.route('/buy-now/<int:product_id>', methods=['POST'])
+def buy_now(product_id):
+    """Buy Now - Direct checkout for single product"""
+    quantity = int(request.form.get('quantity', 1))
+    
+    conn = get_db_connection()
+    product = conn.execute(
+        'SELECT * FROM products WHERE id = ?', 
+        (product_id,)
+    ).fetchone()
+    conn.close()
+    
+    if not product:
+        flash('Product not found', 'error')
+        return redirect(url_for('shop'))
+    
+    if product['stock'] < quantity:
+        flash('Insufficient stock', 'error')
+        return redirect(url_for('product_detail', product_id=product_id))
+    
+    if 'customer_id' not in session:
+        flash('Please login first to purchase', 'error')
+        return redirect(url_for('login'))
+    
+    buy_now_cart = {
+        str(product_id): {
+            'id': product['id'],
+            'name': product['name'],
+            'price': product['price'],
+            'image_url': product['image_url'],
+            'quantity': quantity,
+            'stock': product['stock']
+        }
+    }
+    
+    session['buy_now_cart'] = buy_now_cart
+    session['is_buy_now'] = True
+    session.modified = True
+    
+    return redirect(url_for('buy_now_checkout'))
+
+@app.route('/buy-now-checkout', methods=['GET', 'POST'])
+@login_required
+def buy_now_checkout():
+    """Special checkout for Buy Now - processes only the selected product"""
+    buy_now_cart = session.get('buy_now_cart', {})
+    
+    if not buy_now_cart:
+        flash('No product selected for quick purchase', 'error')
+        return redirect(url_for('shop'))
+    
+    conn = get_db_connection()
+    customer = conn.execute(
+        'SELECT * FROM customers WHERE id = ?',
+        (session['customer_id'],)
+    ).fetchone()
+    
+    if not customer['phone'] or not customer['address']:
+        flash('Please update your phone number and delivery address in your profile before checking out', 'error')
+        conn.close()
+        return redirect(url_for('profile'))
+    
+    if len(customer['phone'].strip()) < 10 or len(customer['address'].strip()) < 20:
+        flash('Please provide a valid phone number and complete delivery address in your profile', 'error')
+        conn.close()
+        return redirect(url_for('profile'))
+    
+    if request.method == 'POST':
+        for item in buy_now_cart.values():
+            order_data = {
+                'customer_id': session['customer_id'],
+                'product_id': item['id'],
+                'quantity': item['quantity'],
+                'total_price': item['price'] * item['quantity'],
+                'status': 'Pending'
+            }
+            
+            order_queue.enqueue(order_data)
+            
+            conn.execute('''
+                INSERT INTO orders 
+                (customer_id, product_id, quantity, total_price, status)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (order_data['customer_id'], order_data['product_id'],
+                  order_data['quantity'], order_data['total_price'],
+                  order_data['status']))
+            
+            conn.execute('''
+                UPDATE products 
+                SET stock = stock - ? 
+                WHERE id = ?
+            ''', (item['quantity'], item['id']))
+        
+        conn.commit()
+        conn.close()
+        
+        session['buy_now_cart'] = {}
+        session['is_buy_now'] = False
+        session.modified = True
+        
+        flash('Order placed successfully!', 'success')
+        return redirect(url_for('my_orders'))
+    
+    total = sum(item['price'] * item['quantity'] for item in buy_now_cart.values())
+    conn.close()
+    
+    return render_template('customer/buy_now_checkout.html', 
+                         cart=buy_now_cart, 
+                         total=total,
+                         cart_count=get_cart_count())
 
 # ============================================
 # ROUTES - CHECKOUT & ORDERS
@@ -504,9 +815,23 @@ def checkout():
         flash('Your cart is empty', 'error')
         return redirect(url_for('shop'))
     
+    conn = get_db_connection()
+    customer = conn.execute(
+        'SELECT * FROM customers WHERE id = ?',
+        (session['customer_id'],)
+    ).fetchone()
+    
+    if not customer['phone'] or not customer['address']:
+        flash('Please update your phone number and delivery address in your profile before checking out', 'error')
+        conn.close()
+        return redirect(url_for('profile'))
+    
+    if len(customer['phone'].strip()) < 10 or len(customer['address'].strip()) < 20:
+        flash('Please provide a valid phone number and complete delivery address in your profile', 'error')
+        conn.close()
+        return redirect(url_for('profile'))
+    
     if request.method == 'POST':
-        conn = get_db_connection()
-        
         for item in cart.values():
             order_data = {
                 'customer_id': session['customer_id'],
@@ -542,23 +867,21 @@ def checkout():
         return redirect(url_for('my_orders'))
     
     total = get_cart_total()
+    conn.close()
     
     return render_template('customer/checkout.html', 
                          cart=cart, 
                          total=total,
                          cart_count=get_cart_count())
 
-
 @app.route('/my-orders')
 @login_required
 def my_orders():
     """View customer's order history with Shopee-style tabs"""
-    # Get status filter from query params
     status_filter = request.args.get('status', '')
     
     conn = get_db_connection()
     
-    # Get order counts for each status (for badges)
     pending_count = conn.execute('''
         SELECT COUNT(*) as count FROM orders 
         WHERE customer_id = ? AND status = 'Pending'
@@ -574,10 +897,10 @@ def my_orders():
         WHERE customer_id = ? AND status = 'Delivered'
     ''', (session['customer_id'],)).fetchone()['count']
     
-    # Build query based on status filter
     query = '''
         SELECT o.*, p.name as product_name, p.type as product_type, 
-               p.image_url as product_image
+               p.image_url as product_image,
+               o.estimated_delivery_date, o.shipped_date
         FROM orders o
         JOIN products p ON o.product_id = p.id
         WHERE o.customer_id = ?
@@ -600,7 +923,6 @@ def my_orders():
                          processing_count=processing_count,
                          delivered_count=delivered_count,
                          cart_count=get_cart_count())
-
 
 @app.route('/order/cancel/<int:order_id>', methods=['POST'])
 @login_required
@@ -643,7 +965,6 @@ def cancel_order(order_id):
     flash(f'Order #{order_id} for {order["product_name"]} has been cancelled', 'success')
     return redirect(url_for('my_orders'))
 
-
 @app.route('/order/received/<int:order_id>', methods=['POST'])
 @login_required
 def mark_received(order_id):
@@ -678,7 +999,6 @@ def mark_received(order_id):
     
     flash(f'Order #{order_id} marked as received. Thank you!', 'success')
     return redirect(url_for('my_orders'))
-
 
 # ============================================
 # ROUTES - PROFILE
@@ -718,7 +1038,6 @@ def profile():
                          cart_count=get_cart_count(),
                          browsing_history=history_products)
 
-
 @app.route('/history/clear', methods=['POST'])
 @login_required
 def clear_history():
@@ -728,14 +1047,38 @@ def clear_history():
     flash('Browsing history cleared', 'success')
     return redirect(url_for('profile'))
 
+@app.route('/clear-search-history', methods=['POST'])
+@login_required
+def clear_search_history():
+    """Clear search history"""
+    session['search_history'] = []
+    session.modified = True
+    flash('Search history cleared', 'success')
+    return redirect(url_for('shop'))
 
 @app.route('/profile/edit', methods=['POST'])
 @login_required
 def edit_profile():
     """Update customer profile"""
     name = request.form['name']
-    phone = request.form.get('phone', '')
-    address = request.form.get('address', '')
+    phone = request.form.get('phone', '').strip()
+    address = request.form.get('address', '').strip()
+    
+    if not phone:
+        flash('Phone number is required', 'error')
+        return redirect(url_for('profile'))
+    
+    if not address:
+        flash('Delivery address is required', 'error')
+        return redirect(url_for('profile'))
+    
+    if len(phone) < 10:
+        flash('Please enter a valid phone number (at least 10 digits)', 'error')
+        return redirect(url_for('profile'))
+    
+    if len(address) < 20:
+        flash('Please enter a complete delivery address (minimum 20 characters)', 'error')
+        return redirect(url_for('profile'))
     
     conn = get_db_connection()
     conn.execute('''
@@ -751,7 +1094,6 @@ def edit_profile():
     flash('Profile updated successfully', 'success')
     
     return redirect(url_for('profile'))
-
 
 @app.route('/profile/change-password', methods=['POST'])
 @login_required
@@ -795,7 +1137,6 @@ def change_password():
     
     flash('Password changed successfully!', 'success')
     return redirect(url_for('profile'))
-
 
 @app.route('/profile/delete-account', methods=['POST'])
 @login_required
@@ -842,7 +1183,6 @@ def delete_account():
     
     flash('Your account has been permanently deleted', 'success')
     return redirect(url_for('shop'))
-
 
 # ============================================
 # APPLICATION STARTUP

@@ -47,7 +47,52 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 # Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Add this to your app.py or customer_app.py to update the database schema
+# Run this ONCE to add the new column to existing database
 
+import sqlite3
+from datetime import datetime, timedelta
+
+def add_delivery_date_column():
+    """Add estimated_delivery_date column to orders table"""
+    conn = sqlite3.connect('cellar_society.db')
+    c = conn.cursor()
+    
+    try:
+        # Check if column already exists
+        c.execute("PRAGMA table_info(orders)")
+        columns = [column[1] for column in c.fetchall()]
+        
+        if 'estimated_delivery_date' not in columns:
+            # Add the new column
+            c.execute('''
+                ALTER TABLE orders 
+                ADD COLUMN estimated_delivery_date TEXT
+            ''')
+            print("✅ Added estimated_delivery_date column to orders table")
+        else:
+            print("✅ Column estimated_delivery_date already exists")
+        
+        if 'shipped_date' not in columns:
+            # Add shipped_date column to track when order was marked as Processing
+            c.execute('''
+                ALTER TABLE orders 
+                ADD COLUMN shipped_date TEXT
+            ''')
+            print("✅ Added shipped_date column to orders table")
+        else:
+            print("✅ Column shipped_date already exists")
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        conn.close()
+
+# Run this function once
+if __name__ == '__main__':
+    add_delivery_date_column()
+    
 # ============================================
 # HELPER FUNCTIONS FOR FILE UPLOAD
 # ============================================
