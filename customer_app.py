@@ -211,140 +211,7 @@ class ShoppingCart:
         """Empty the cart"""
         self.cart.clear()
 
-# ============================================
-# DATA STRUCTURES - BST (Recommendations)
-# ============================================
 
-class RecommendationNode:
-    """Node for recommendation BST organized by similarity score"""
-    def __init__(self, product, score):
-        self.product = product
-        self.score = score
-        self.left = None
-        self.right = None
-
-class RecommendationBST:
-    """
-    Binary Search Tree for product recommendations
-    Organized by similarity score for efficient retrieval
-    Time Complexity: O(log n) for insertion and retrieval
-    """
-    
-    def __init__(self):
-        self.root = None
-        self.recommendations = []
-    
-    def insert(self, product, score):
-        """Insert recommendation with score - O(log n)"""
-        if not self.root:
-            self.root = RecommendationNode(product, score)
-        else:
-            self._insert_recursive(self.root, product, score)
-    
-    def _insert_recursive(self, node, product, score):
-        """Helper for recursive insertion"""
-        if score >= node.score:
-            if node.right is None:
-                node.right = RecommendationNode(product, score)
-            else:
-                self._insert_recursive(node.right, product, score)
-        else:
-            if node.left is None:
-                node.left = RecommendationNode(product, score)
-            else:
-                self._insert_recursive(node.left, product, score)
-    
-    def get_top_recommendations(self, limit=6):
-        """
-        Get top N recommendations (highest scores)
-        Uses in-order traversal in reverse to get highest scores first
-        Time Complexity: O(n) for traversal
-        """
-        self.recommendations = []
-        self._reverse_inorder(self.root, limit)
-        return self.recommendations[:limit]
-    
-    def _reverse_inorder(self, node, limit):
-        """Reverse in-order traversal (right -> node -> left) for highest scores first"""
-        if node is None or len(self.recommendations) >= limit:
-            return
-        
-        self._reverse_inorder(node.right, limit)
-        
-        if len(self.recommendations) < limit:
-            self.recommendations.append(node.product)
-        
-        self._reverse_inorder(node.left, limit)
-
-def calculate_similarity_score(viewed_product, candidate_product):
-    """
-    Calculate similarity score between two products
-    Score based on:
-    - Same type: +50 points
-    - Similar region: +30 points
-    - Similar price range: +20 points
-    """
-    score = 0
-    
-    if viewed_product['type'] == candidate_product['type']:
-        score += 50
-    
-    viewed_region = viewed_product['region'].lower()
-    candidate_region = candidate_product['region'].lower()
-    
-    viewed_words = set(viewed_region.split())
-    candidate_words = set(candidate_region.split())
-    common_words = viewed_words.intersection(candidate_words)
-    
-    if len(common_words) > 0:
-        score += 30
-    
-    price_diff = abs(viewed_product['price'] - candidate_product['price'])
-    avg_price = (viewed_product['price'] + candidate_product['price']) / 2
-    
-    if avg_price > 0:
-        diff_percentage = (price_diff / avg_price) * 100
-        if diff_percentage <= 20:
-            score += 20
-    
-    return score
-
-def get_recommendations_for_product(product_id, limit=6):
-    """
-    Get product recommendations based on last viewed product
-    Uses BST for efficient organization by similarity score
-    Returns: List of recommended products
-    """
-    conn = get_db_connection()
-    
-    viewed_product = conn.execute(
-        'SELECT * FROM products WHERE id = ?',
-        (product_id,)
-    ).fetchone()
-    
-    if not viewed_product:
-        conn.close()
-        return []
-    
-    all_products = conn.execute(
-        'SELECT * FROM products WHERE id != ? AND stock > 0',
-        (product_id,)
-    ).fetchall()
-    
-    conn.close()
-    
-    rec_bst = RecommendationBST()
-    
-    for product in all_products:
-        score = calculate_similarity_score(viewed_product, product)
-        
-        if score > 0:
-            product_dict = dict(product)
-            rec_bst.insert(product_dict, score)
-    
-    recommendations = rec_bst.get_top_recommendations(limit)
-    
-    return recommendations
 
 # Global instances
 order_queue = OrderQueue()
@@ -402,6 +269,8 @@ def index():
     """Landing page - redirect to shop"""
     return redirect(url_for('shop'))
 
+# Replace the shop() route in customer_app.py with this:
+
 @app.route('/shop')
 def shop():
     """Main shop page - browse all wines"""
@@ -451,6 +320,12 @@ def shop():
         query += ' ORDER BY created_at DESC'
     
     products = conn.execute(query, params).fetchall()
+    
+    # Get random recommendations (6 wines)
+    recommendations = conn.execute(
+        'SELECT * FROM products WHERE stock > 0 ORDER BY RANDOM() LIMIT 6'
+    ).fetchall()
+    
     conn.close()
     
     recent_searches = []
@@ -463,7 +338,8 @@ def shop():
                          search=search,
                          sort=sort,
                          cart_count=get_cart_count(),
-                         recent_searches=recent_searches)
+                         recent_searches=recent_searches,
+                         recommendations=recommendations)
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
@@ -496,13 +372,12 @@ def product_detail(product_id):
     session['browsing_history'] = history
     session.modified = True
     
-    # Get recommendations based on this product (BST)
-    recommendations = get_recommendations_for_product(product_id, limit=6)
-    
-    return render_template('customer/product_detail.html', 
-                         product=product,
-                         cart_count=get_cart_count(),
-                         recommendations=recommendations)
+    return render_template(
+        'customer/product_detail.html', 
+        product=product,
+        cart_count=get_cart_count()
+    )
+
 
 # ============================================
 # ROUTES - AUTHENTICATION
