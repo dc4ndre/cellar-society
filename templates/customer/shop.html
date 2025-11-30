@@ -10,54 +10,13 @@
     <p style="color: var(--muted); font-size: 1.1em;">Explore premium wines from around the world</p>
 </div>
 
-
-
 <!-- Search and Filters -->
 <div class="card">
     <form method="GET" style="display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: end;">
-        <div style="position: relative;">
-            <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--primary);">
-                Search Wines (by Name, Region, or Type)
-            </label>
-            <input type="text" id="searchInput" name="search" 
-                   placeholder="Search by name, region, or type..." value="{{ search }}" 
-                   autocomplete="off"
-                   onfocus="document.getElementById('searchDropdown').style.display='block'"
+        <div>
+            <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--primary);">Search Wines</label>
+            <input type="text" name="search" placeholder="Search by name, or region..." value="{{ search }}" 
                    style="width: 100%; padding: 12px 16px; border: 2px solid #e5e0da; border-radius: 8px; font-family: 'Poppins';">
-            
-            <!-- Search History Dropdown (Stack - LIFO) -->
-            {% if recent_searches %}
-            <div id="searchDropdown" 
-                 style="display: none; position: absolute; top: 100%; left: 0; right: 0; 
-                        background: white; border: 2px solid var(--accent); border-top: none; 
-                        border-radius: 0 0 8px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-                        z-index: 1000; max-height: 250px; overflow-y: auto; margin-top: -8px;">
-                <div style="padding: 8px 12px; background: rgba(198, 166, 100, 0.1); 
-                            border-bottom: 1px solid #e5e0da; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 12px; color: var(--muted); font-weight: 600;">
-                        RECENT SEARCHES (STACK - LIFO)
-                    </span>
-                    <form method="POST" action="{{ url_for('clear_search_history') }}" style="display: inline;">
-                        <button type="submit" 
-                                style="background: none; border: none; color: var(--danger); 
-                                       cursor: pointer; font-size: 11px; font-weight: 600; padding: 2px 6px;"
-                                onclick="return confirm('Clear all search history?');">
-                            Clear
-                        </button>
-                    </form>
-                </div>
-                {% for query in recent_searches %}
-                <div onclick="document.getElementById('searchInput').value='{{ query }}'; document.getElementById('searchDropdown').style.display='none';" 
-                     style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f0f0; 
-                            display: flex; align-items: center; gap: 10px;"
-                     onmouseover="this.style.background='rgba(198, 166, 100, 0.1)'" 
-                     onmouseout="this.style.background='white'">
-                    <span style="color: var(--muted);">🔍</span>
-                    <span style="color: var(--text); font-size: 14px;">{{ query }}</span>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
         
         <div>
@@ -78,27 +37,6 @@
     </form>
 </div>
 
-<script>
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('searchDropdown');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (dropdown && searchInput) {
-        if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
-            dropdown.style.display = 'none';
-        }
-    }
-});
-
-// Show dropdown on input focus if there are recent searches
-document.getElementById('searchInput').addEventListener('focus', function() {
-    const dropdown = document.getElementById('searchDropdown');
-    if (dropdown) {
-        dropdown.style.display = 'block';
-    }
-});
-</script>
 <!-- Category Info -->
 {% if wine_type %}
 <div class="card" style="background: linear-gradient(135deg, var(--primary) 0%, #6a302c 100%); color: white; margin-top: 20px;">
