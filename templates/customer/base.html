@@ -300,13 +300,13 @@
                 
                 <!-- Categories Dropdown -->
                 <div style="position: relative; display: inline-block;" 
-                     onmouseover="document.getElementById('categoriesDropdown').style.display='block'" 
-                     onmouseout="document.getElementById('categoriesDropdown').style.display='none'">
+                    onmouseover="document.getElementById('categoriesDropdown').style.display='block'" 
+                    onmouseout="document.getElementById('categoriesDropdown').style.display='none'">
                     <a href="#" style="cursor: pointer;">
                         Categories ▾
                     </a>
                     <div id="categoriesDropdown" 
-                         style="display: none; position: absolute; top: 100%; left: 0; background: white; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; margin-top: 8px; z-index: 1000; padding: 8px 0;">
+                        style="display: none; position: absolute; top: 100%; left: 0; background: white; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; margin-top: 8px; z-index: 1000; padding: 8px 0;">
                         <a href="{{ url_for('shop') }}" style="display: block; padding: 10px 16px; color: var(--text); text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(198, 166, 100, 0.1)'" onmouseout="this.style.background='white'">
                             All Wines
                         </a>
@@ -332,7 +332,19 @@
                 </div>
                 
                 {% if session.customer_id %}
-                    <a href="{{ url_for('my_orders') }}" {% if request.endpoint == 'my_orders' %}class="active"{% endif %}>My Orders</a>
+                    <a href="{{ url_for('my_orders') }}" style="position: relative;" {% if request.endpoint == 'my_orders' %}class="active"{% endif %}>
+                        My Orders
+                        {% if notifications.orders_to_pay + notifications.orders_to_receive > 0 %}
+                        <span class="cart-badge">{{ notifications.orders_to_pay + notifications.orders_to_receive }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('messages') }}" style="position: relative;" {% if request.endpoint == 'messages' %}class="active"{% endif %}>
+                        Messages
+                        {% if notifications.unread_messages > 0 %}
+                        <span class="cart-badge">{{ notifications.unread_messages }}</span>
+                        {% endif %}
+                    </a>
+                    
                     <a href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}class="active"{% endif %}>Profile</a>
                     <a href="{{ url_for('view_cart') }}" style="position: relative;" {% if request.endpoint == 'view_cart' %}class="active"{% endif %}>
                         Cart

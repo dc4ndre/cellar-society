@@ -19,7 +19,7 @@ Data Structures Used:
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from PIL import Image
 import sqlite3
@@ -44,55 +44,7 @@ MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
-# Create upload directory if it doesn't exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Add this to your app.py or customer_app.py to update the database schema
-# Run this ONCE to add the new column to existing database
-
-import sqlite3
-from datetime import datetime, timedelta
-
-def add_delivery_date_column():
-    """Add estimated_delivery_date column to orders table"""
-    conn = sqlite3.connect('cellar_society.db')
-    c = conn.cursor()
-    
-    try:
-        # Check if column already exists
-        c.execute("PRAGMA table_info(orders)")
-        columns = [column[1] for column in c.fetchall()]
-        
-        if 'estimated_delivery_date' not in columns:
-            # Add the new column
-            c.execute('''
-                ALTER TABLE orders 
-                ADD COLUMN estimated_delivery_date TEXT
-            ''')
-            print("✅ Added estimated_delivery_date column to orders table")
-        else:
-            print("✅ Column estimated_delivery_date already exists")
-        
-        if 'shipped_date' not in columns:
-            # Add shipped_date column to track when order was marked as Processing
-            c.execute('''
-                ALTER TABLE orders 
-                ADD COLUMN shipped_date TEXT
-            ''')
-            print("✅ Added shipped_date column to orders table")
-        else:
-            print("✅ Column shipped_date already exists")
-        
-        conn.commit()
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        conn.close()
-
-# Run this function once
-if __name__ == '__main__':
-    add_delivery_date_column()
-    
 # ============================================
 # HELPER FUNCTIONS FOR FILE UPLOAD
 # ============================================
@@ -204,6 +156,29 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+def migrate_database():
+    """Add missing columns to orders table"""
+    conn = sqlite3.connect('cellar_society.db')
+    try:
+        conn.execute('''
+            ALTER TABLE orders 
+            ADD COLUMN estimated_delivery_date TEXT
+        ''')
+        print("✅ Added estimated_delivery_date column")
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        conn.execute('''
+            ALTER TABLE orders 
+            ADD COLUMN shipped_date TEXT
+        ''')
+        print("✅ Added shipped_date column")
+    except sqlite3.OperationalError:
+        pass
+    
+    conn.commit()
+    conn.close()
 
 # ============================================
 # DATA STRUCTURES - HASH TABLE
@@ -397,6 +372,53 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def get_admin_notification_counts():
+    """Get all notification counts for admin"""
+    conn = get_db_connection()
+    
+    # Pending orders (need to be processed)
+    pending_orders = conn.execute('''
+        SELECT COUNT(*) as count FROM orders 
+        WHERE status = 'Pending'
+    ''').fetchone()['count']
+    
+    # Processing orders (need to be shipped)
+    processing_orders = conn.execute('''
+        SELECT COUNT(*) as count FROM orders 
+        WHERE status = 'Processing'
+    ''').fetchone()['count']
+    
+    # Unread messages from customers
+    unread_messages = conn.execute('''
+        SELECT COUNT(*) as count FROM messages 
+        WHERE sender_type = 'customer' AND is_read = 0
+    ''').fetchone()['count']
+    
+    conn.close()
+    
+    total = pending_orders + processing_orders + unread_messages
+    
+    return {
+        'pending_orders': pending_orders,
+        'processing_orders': processing_orders,
+        'unread_messages': unread_messages,
+        'total': total
+    }
+
+# ============================================
+# ROUTES - AUTHENTICATION
+# ============================================
+
+# ============================================
+# CONTEXT PROCESSOR
+# ============================================
+
+@app.context_processor
+def inject_admin_notifications():
+    """Make notification counts available to all admin templates"""
+    return {
+        'notifications': get_admin_notification_counts()
+    }
 
 # ============================================
 # ROUTES - AUTHENTICATION
@@ -490,6 +512,15 @@ def dashboard():
         'SELECT COUNT(*) as count FROM orders WHERE status = "Pending"'
     ).fetchone()['count']
     
+    processing_orders = conn.execute(
+        'SELECT COUNT(*) as count FROM orders WHERE status = "Processing"'
+    ).fetchone()['count']
+    
+    unread_messages = conn.execute('''
+        SELECT COUNT(*) as count FROM messages 
+        WHERE sender_type = 'customer' AND is_read = 0
+    ''').fetchone()['count']
+
     # Get recent orders with joins
     recent_orders = conn.execute('''
         SELECT o.id, c.name as customer_name, p.name as product_name, 
@@ -508,13 +539,14 @@ def dashboard():
         'total_products': total_products,
         'total_customers': total_customers,
         'total_orders': total_orders,
-        'pending_orders': pending_orders
+        'pending_orders': pending_orders,
+        'processing_orders': processing_orders,
+        'unread_messages': unread_messages
     }
     
     return render_template('admin/dashboard.html', 
                          stats=stats, 
                          recent_orders=recent_orders)
-
 
 # ============================================
 # ROUTES - PRODUCT MANAGEMENT (CRUD)
@@ -892,19 +924,152 @@ def update_order_status(order_id):
         conn.close()
         return redirect(url_for('orders'))
     
-    # Update status
-    conn.execute('''
-        UPDATE orders 
-        SET status = ?
-        WHERE id = ?
-    ''', (new_status, order_id))
+    # Calculate estimated delivery date if status is changing to Processing
+    estimated_delivery = None
+    shipped_date = None
+    
+    if new_status == 'Processing':
+        # Set shipped date to today
+        shipped_date = datetime.now().strftime('%Y-%m-%d')
+        # Set estimated delivery to 3-5 days from now (using 4 days as middle ground)
+        estimated_delivery = (datetime.now() + timedelta(days=4)).strftime('%B %d, %Y')
+    
+    # Update status and dates
+    if estimated_delivery:
+        conn.execute('''
+            UPDATE orders 
+            SET status = ?, estimated_delivery_date = ?, shipped_date = ?
+            WHERE id = ?
+        ''', (new_status, estimated_delivery, shipped_date, order_id))
+    else:
+        conn.execute('''
+            UPDATE orders 
+            SET status = ?
+            WHERE id = ?
+        ''', (new_status, order_id))
     
     conn.commit()
     conn.close()
     
     flash(f'Order #{order_id} status updated to {new_status}', 'success')
     return redirect(url_for('orders'))
+# ============================================
+# ROUTES - MESSAGING SYSTEM
+# ============================================
 
+@app.route('/messages')
+@login_required
+def messages():
+    """View all customer conversations"""
+    conn = get_db_connection()
+    
+    # Get list of customers who have sent messages with unread count
+    customers_with_messages = conn.execute('''
+        SELECT 
+            c.id,
+            c.name,
+            c.email,
+            COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 'customer' THEN 1 END) as unread_count,
+            MAX(m.created_at) as last_message_time
+        FROM customers c
+        INNER JOIN messages m ON c.id = m.customer_id
+        GROUP BY c.id, c.name, c.email
+        ORDER BY last_message_time DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    return render_template('admin/messages.html', 
+                         customers=customers_with_messages)
+
+
+@app.route('/messages/<int:customer_id>')
+@login_required
+def message_thread(customer_id):
+    """View conversation with specific customer"""
+    conn = get_db_connection()
+    
+    # Get customer info
+    customer = conn.execute(
+        'SELECT * FROM customers WHERE id = ?',
+        (customer_id,)
+    ).fetchone()
+    
+    if not customer:
+        flash('Customer not found', 'error')
+        conn.close()
+        return redirect(url_for('messages'))
+    
+    # Get all messages in this conversation
+    messages = conn.execute('''
+        SELECT * FROM messages 
+        WHERE customer_id = ?
+        ORDER BY created_at ASC
+    ''', (customer_id,)).fetchall()
+    
+    # Mark admin's unread messages as read (messages from customer)
+    conn.execute('''
+        UPDATE messages 
+        SET is_read = 1
+        WHERE customer_id = ? AND sender_type = 'customer' AND is_read = 0
+    ''', (customer_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    return render_template('admin/message_thread.html',
+                         customer=customer,
+                         messages=messages)
+
+
+@app.route('/messages/<int:customer_id>/send', methods=['POST'])
+@login_required
+def send_message_to_customer(customer_id):
+    """Send message to customer"""
+    message_text = request.form.get('message', '').strip()
+    
+    if not message_text:
+        flash('Message cannot be empty', 'error')
+        return redirect(url_for('message_thread', customer_id=customer_id))
+    
+    if len(message_text) > 1000:
+        flash('Message is too long (max 1000 characters)', 'error')
+        return redirect(url_for('message_thread', customer_id=customer_id))
+    
+    conn = get_db_connection()
+    
+    # Verify customer exists
+    customer = conn.execute(
+        'SELECT * FROM customers WHERE id = ?',
+        (customer_id,)
+    ).fetchone()
+    
+    if not customer:
+        flash('Customer not found', 'error')
+        conn.close()
+        return redirect(url_for('messages'))
+    
+    conn.execute('''
+        INSERT INTO messages (customer_id, sender_type, message)
+        VALUES (?, 'admin', ?)
+    ''', (customer_id, message_text))
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Message sent successfully!', 'success')
+    return redirect(url_for('message_thread', customer_id=customer_id))
+
+
+def get_total_unread_messages():
+    """Get total count of unread messages from customers"""
+    conn = get_db_connection()
+    count = conn.execute('''
+        SELECT COUNT(*) as count FROM messages 
+        WHERE sender_type = 'customer' AND is_read = 0
+    ''').fetchone()['count']
+    conn.close()
+    return count
 
 # ============================================
 # APPLICATION STARTUP
@@ -913,6 +1078,7 @@ def update_order_status(order_id):
 if __name__ == '__main__':
     # Initialize database and create tables
     init_db()
+    migrate_database()  # ADD THIS LINE
     
     # Load products into hash table cache
     load_products_to_cache()

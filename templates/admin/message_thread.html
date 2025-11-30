@@ -1,0 +1,136 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Message: {{ customer.name }} - Cellar Society{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Conversation with {{ customer.name }}</h2>
+    <p>{{ customer.email }} • Customer ID: #{{ customer.id }}</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Message Thread -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e5e0da;">
+            <h3 style="color: var(--primary); margin: 0;">Message Thread</h3>
+            <a href="{{ url_for('messages') }}" class="btn btn-small ghost">
+                ← Back to Messages
+            </a>
+        </div>
+
+        <!-- Messages -->
+        <div style="background: #f9f8f7; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 500px; overflow-y: auto; margin-bottom: 20px;" id="messageThread">
+            {% if messages %}
+                {% for msg in messages %}
+                    {% if msg.sender_type == 'customer' %}
+                        <!-- Customer Message (Left) -->
+                        <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
+                            <div style="max-width: 70%;">
+                                <div style="background: white; color: var(--text); padding: 12px 16px; border-radius: 16px 16px 16px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e5e0da;">
+                                    <p style="margin: 0; line-height: 1.5;">{{ msg.message }}</p>
+                                </div>
+                                <div style="margin-top: 4px;">
+                                    <small style="color: var(--muted); font-size: 11px;">
+                                        {{ msg.created_at[:16] }} • {{ customer.name }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Admin Message (Right) -->
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                            <div style="max-width: 70%;">
+                                <div style="background: var(--accent); color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <p style="margin: 0; line-height: 1.5;">{{ msg.message }}</p>
+                                </div>
+                                <div style="text-align: right; margin-top: 4px;">
+                                    <small style="color: var(--muted); font-size: 11px;">
+                                        {{ msg.created_at[:16] }} • You
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 80px 20px;">
+                    <div style="font-size: 60px; margin-bottom: 16px;">💬</div>
+                    <h3 style="color: var(--primary); margin-bottom: 12px;">No Messages Yet</h3>
+                    <p style="color: var(--muted);">Start the conversation by sending a message</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Reply Form -->
+        <form method="POST" action="{{ url_for('send_message_to_customer', customer_id=customer.id) }}">
+            <div style="display: flex; gap: 12px; align-items: end;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+                        Send Reply
+                    </label>
+                    <textarea name="message" placeholder="Type your reply..." required maxlength="1000" rows="3"
+                              style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px; resize: vertical;"></textarea>
+                    <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">
+                        Max 1000 characters
+                    </small>
+                </div>
+                <button type="submit" class="btn accent" style="padding: 14px 24px; height: fit-content;">
+                    Send Reply
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Customer Info Sidebar -->
+    <div>
+        <div class="card">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">Customer Information</h3>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">CUSTOMER NAME</p>
+                <p style="font-weight: 600; color: var(--primary);">{{ customer.name }}</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">EMAIL ADDRESS</p>
+                <p style="font-weight: 600;">{{ customer.email }}</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">PHONE NUMBER</p>
+                <p style="font-weight: 600;">{{ customer.phone if customer.phone else 'Not provided' }}</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">MEMBER SINCE</p>
+                <p style="font-weight: 600;">{{ customer.joined_at[:10] }}</p>
+            </div>
+            
+            <a href="{{ url_for('customer_detail', customer_id=customer.id) }}" class="btn primary" style="width: 100%; text-align: center; margin-top: 16px;">
+                View Full Profile
+            </a>
+        </div>
+
+        <div class="card" style="background: rgba(198, 166, 100, 0.05);">
+            <h3 style="color: var(--primary); margin-bottom: 12px;">💡 Tips</h3>
+            <ul style="line-height: 2; color: var(--text); padding-left: 20px; margin: 0; font-size: 14px;">
+                <li>Respond promptly to customer inquiries</li>
+                <li>Be professional and courteous</li>
+                <li>Provide clear and helpful information</li>
+                <li>Messages are private between you and this customer</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll to bottom of message thread
+window.onload = function() {
+    const messageThread = document.getElementById('messageThread');
+    if (messageThread) {
+        messageThread.scrollTop = messageThread.scrollHeight;
+    }
+}
+</script>
+
+{% endblock %}

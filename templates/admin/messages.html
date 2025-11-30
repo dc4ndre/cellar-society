@@ -1,0 +1,68 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Customer Messages - Cellar Society{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Customer Messages</h2>
+    <p>View and respond to customer inquiries</p>
+</div>
+
+<!-- Messages List -->
+<div class="card">
+    <h3>Customer Conversations ({{ customers|length }})</h3>
+    
+    {% if customers %}
+    <div style="margin-top: 20px;">
+        {% for customer in customers %}
+        <a href="{{ url_for('message_thread', customer_id=customer.id) }}" 
+           style="text-decoration: none; color: inherit; display: block; padding: 20px; border-bottom: 1px solid #e5e0da; transition: background 0.2s;"
+           onmouseover="this.style.background='rgba(198, 166, 100, 0.05)'"
+           onmouseout="this.style.background=''">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <h4 style="color: var(--primary); margin: 0; font-size: 1.1em;">
+                            {{ customer.name }}
+                        </h4>
+                        {% if customer.unread_count > 0 %}
+                        <span style="background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                            {{ customer.unread_count }} new
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p style="color: var(--muted); font-size: 14px; margin: 0;">
+                        {{ customer.email }}
+                    </p>
+                </div>
+                
+                <div style="text-align: right;">
+                    <p style="color: var(--muted); font-size: 13px; margin: 0;">
+                        Last message: {{ customer.last_message_time[:16] }}
+                    </p>
+                    <span class="btn btn-small primary" style="margin-top: 8px;">
+                        View Conversation →
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No Messages Yet</h3>
+        <p>Customer messages will appear here when they contact you</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Info Box -->
+<div class="card" style="background: rgba(198, 166, 100, 0.05); border-left: 4px solid var(--accent);">
+    <h3>About Customer Messages</h3>
+    <p style="font-size: 14px; line-height: 1.8; color: var(--muted);">
+        <strong>Message System:</strong> Customers can send you private messages to raise concerns, ask questions, or request support.
+        Each conversation is private between you and the individual customer. Click on any conversation to view the full message thread and reply.
+    </p>
+</div>
+{% endblock %}

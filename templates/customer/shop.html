@@ -41,12 +41,25 @@
                                         display: flex; justify-content: space-between; align-items: center;">
                                 <span style="font-size: 11px; color: #888; font-weight: 600;">RECENT</span>
                                 <form method="POST" action="{{ url_for('clear_search_history') }}" style="display: inline;">
-                                    <button type="button" 
+                                    <button type="button"
                                             style="background: none; border: none; color: #dc3545; 
-                                                   cursor: pointer; font-size: 10px; font-weight: 600; padding: 2px 4px;"
-                                            onclick="return confirm('Clear all?');">
+                                                cursor: pointer; font-size: 10px; font-weight: 600; padding: 2px 4px;"
+                                            onclick="clearDropdown();">
                                         Clear
                                     </button>
+
+                                    <script>
+                                    function clearDropdown() {
+                                        if (confirm('Clear all?')) {
+                                            const dropdown = document.getElementById('searchDropdown');
+                                            if (dropdown) {
+                                                // Remove all children except the header
+                                                dropdown.querySelectorAll('div:not(:first-child)').forEach(el => el.remove());
+                                            }
+                                        }
+                                    }
+                                    </script>
+
                                 </form>
                             </div>
                             

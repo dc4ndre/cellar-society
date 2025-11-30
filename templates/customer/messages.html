@@ -1,0 +1,96 @@
+{% extends "customer/base.html" %}
+
+{% block title %}Messages - Cellar Society{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
+        Messages
+    </h2>
+    <p style="color: var(--muted); font-size: 1.1em;">Chat with Cellar Society Admin</p>
+</div>
+
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    <!-- Message Thread -->
+    <div style="background: #f9f8f7; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 500px; overflow-y: auto; margin-bottom: 20px;" id="messageThread">
+        {% if messages %}
+            {% for msg in messages %}
+                {% if msg.sender_type == 'customer' %}
+                    <!-- Customer Message (Right) -->
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                        <div style="max-width: 70%;">
+                            <div style="background: var(--primary); color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <p style="margin: 0; line-height: 1.5;">{{ msg.message }}</p>
+                            </div>
+                            <div style="text-align: right; margin-top: 4px;">
+                                <small style="color: var(--muted); font-size: 11px;">
+                                    {{ msg.created_at[:16] }} • You
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Admin Message (Left) -->
+                    <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
+                        <div style="max-width: 70%;">
+                            <div style="background: white; color: var(--text); padding: 12px 16px; border-radius: 16px 16px 16px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e5e0da;">
+                                <p style="margin: 0; line-height: 1.5;">{{ msg.message }}</p>
+                            </div>
+                            <div style="margin-top: 4px;">
+                                <small style="color: var(--muted); font-size: 11px;">
+                                    {{ msg.created_at[:16] }} • Admin
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div style="text-align: center; padding: 80px 20px;">
+                
+                <h3 style="color: var(--primary); margin-bottom: 12px;">No Messages Yet</h3>
+                <p style="color: var(--muted);">Start a conversation with the admin by sending a message below</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Message Input -->
+    <form method="POST" action="{{ url_for('send_message') }}">
+        <div style="display: flex; gap: 12px; align-items: end;">
+            <div style="flex: 1;">
+                <textarea name="message" placeholder="Type your message here..." required maxlength="1000" rows="3"
+                          style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 2px solid #e5e0da; font-family: 'Poppins'; font-size: 15px; resize: vertical;"></textarea>
+                <small style="color: var(--muted); font-size: 12px; display: block; margin-top: 4px;">
+                    Max 1000 characters
+                </small>
+            </div>
+            <button type="submit" class="btn accent" style="padding: 14px 24px; height: fit-content;">
+                Send Message
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Help Section -->
+<div class="card" style="max-width: 900px; margin: 24px auto 0; background: rgba(198, 166, 100, 0.05); border-left: 4px solid var(--accent);">
+    <h3 style="color: var(--primary); margin-bottom: 12px;">💡How to use Messages</h3>
+    <ul style="line-height: 2; color: var(--text); padding-left: 20px; margin: 0;">
+        <li>Send messages to the admin for any concerns or questions</li>
+        <li>You'll receive replies directly in this conversation</li>
+        <li>Check back regularly for responses</li>
+        <li>All your messages are private and only visible to you and the admin</li>
+    </ul>
+</div>
+
+<script>
+// Auto-scroll to bottom of message thread
+window.onload = function() {
+    const messageThread = document.getElementById('messageThread');
+    if (messageThread) {
+        messageThread.scrollTop = messageThread.scrollHeight;
+    }
+}
+</script>
+
+{% endblock %}

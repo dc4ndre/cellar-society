@@ -450,7 +450,22 @@
             <a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
             <a href="{{ url_for('products') }}" {% if request.endpoint in ['products', 'add_product', 'edit_product'] %}class="active"{% endif %}>Products</a>
             <a href="{{ url_for('customers') }}" {% if request.endpoint in ['customers', 'customer_detail'] %}class="active"{% endif %}>Customers</a>
-            <a href="{{ url_for('orders') }}" {% if request.endpoint in ['orders', 'order_detail'] %}class="active"{% endif %}>Orders</a>
+            <a href="{{ url_for('orders') }}" style="position: relative;" {% if request.endpoint in ['orders', 'order_detail'] %}class="active"{% endif %}>
+                Orders
+                {% if notifications.pending_orders + notifications.processing_orders > 0 %}
+                <span style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                    {{ notifications.pending_orders + notifications.processing_orders }}
+                </span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('messages') }}" style="position: relative;" {% if request.endpoint in ['messages', 'message_thread'] %}class="active"{% endif %}>
+                Messages
+                {% if notifications.unread_messages > 0 %}
+                <span style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                    {{ notifications.unread_messages }}
+                </span>
+                {% endif %}
+            </a>
             
             <div class="user-info">
                 <span>{{ session.admin_username }}</span>

@@ -22,6 +22,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from functools import wraps
 from datetime import datetime, timedelta
 from collections import deque
+from datetime import datetime
 import sqlite3
 import hashlib
 import os
@@ -43,6 +44,34 @@ def get_db_connection():
     conn = sqlite3.connect('cellar_society.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+def migrate_database():
+    """Add missing columns to orders table"""
+    conn = get_db_connection()
+    try:
+        # Add estimated_delivery_date column
+        conn.execute('''
+            ALTER TABLE orders 
+            ADD COLUMN estimated_delivery_date TEXT
+        ''')
+        print("✅ Added estimated_delivery_date column")
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    try:
+        # Add shipped_date column for tracking
+        conn.execute('''
+            ALTER TABLE orders 
+            ADD COLUMN shipped_date TEXT
+        ''')
+        print("✅ Added shipped_date column")
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    conn.commit()
+    conn.close()
 
 # ============================================
 # DATA STRUCTURES - QUEUE (Order Processing)
@@ -260,14 +289,75 @@ def get_cart_count():
     cart = get_cart()
     return sum(item['quantity'] for item in cart.values())
 
+def get_notification_counts():
+    """Get all notification counts for customer"""
+    if 'customer_id' not in session:
+        return {
+            'orders_to_pay': 0,
+            'orders_to_receive': 0,
+            'unread_messages': 0,
+            'total': 0
+        }
+    
+    conn = get_db_connection()
+    
+    # Orders to pay (Pending)
+    orders_to_pay = conn.execute('''
+        SELECT COUNT(*) as count FROM orders 
+        WHERE customer_id = ? AND status = 'Pending'
+    ''', (session['customer_id'],)).fetchone()['count']
+    
+    # Orders to receive (Delivered)
+    orders_to_receive = conn.execute('''
+        SELECT COUNT(*) as count FROM orders 
+        WHERE customer_id = ? AND status = 'Delivered'
+    ''', (session['customer_id'],)).fetchone()['count']
+    
+    # Unread messages from admin
+    unread_messages = conn.execute('''
+        SELECT COUNT(*) as count FROM messages 
+        WHERE customer_id = ? AND sender_type = 'admin' AND is_read = 0
+    ''', (session['customer_id'],)).fetchone()['count']
+    
+    conn.close()
+    
+    total = orders_to_pay + orders_to_receive + unread_messages
+    
+    return {
+        'orders_to_pay': orders_to_pay,
+        'orders_to_receive': orders_to_receive,
+        'unread_messages': unread_messages,
+        'total': total
+    }
+
+# ============================================
+# ROUTES - HOME & SHOP
+# ============================================
+
+# ============================================
+# CONTEXT PROCESSOR
+# ============================================
+
+@app.context_processor
+def inject_notifications():
+    """Make notification counts available to all templates"""
+    return {
+        'notifications': get_notification_counts(),
+        'cart_count': get_cart_count()
+    }
+
+# ============================================
+# ROUTES - HOME & SHOP
+# ============================================
+
 # ============================================
 # ROUTES - HOME & SHOP
 # ============================================
 
 @app.route('/')
 def index():
-    """Landing page - redirect to shop"""
-    return redirect(url_for('shop'))
+    """Landing page"""
+    return render_template('customer/landing.html', cart_count=get_cart_count())
 
 # Replace the shop() route in customer_app.py with this:
 
@@ -627,7 +717,7 @@ def buy_now_checkout():
         conn.close()
         return redirect(url_for('profile'))
     
-    if len(customer['phone'].strip()) < 10 or len(customer['address'].strip()) < 20:
+    if len(customer['phone'].strip()) < 11 or len(customer['address'].strip()) < 11:
         flash('Please provide a valid phone number and complete delivery address in your profile', 'error')
         conn.close()
         return redirect(url_for('profile'))
@@ -947,12 +1037,12 @@ def edit_profile():
         flash('Delivery address is required', 'error')
         return redirect(url_for('profile'))
     
-    if len(phone) < 10:
-        flash('Please enter a valid phone number (at least 10 digits)', 'error')
+    if len(phone) < 11:
+        flash('Please enter a valid phone number (at least 11 digits)', 'error')
         return redirect(url_for('profile'))
     
-    if len(address) < 20:
-        flash('Please enter a complete delivery address (minimum 20 characters)', 'error')
+    if len(address) < 10:
+        flash('Please enter a complete delivery address (minimum 10 characters)', 'error')
         return redirect(url_for('profile'))
     
     conn = get_db_connection()
@@ -1060,10 +1150,85 @@ def delete_account():
     return redirect(url_for('shop'))
 
 # ============================================
+# ROUTES - MESSAGING SYSTEM
+# ============================================
+
+@app.route('/messages')
+@login_required
+def messages():
+    """View message thread with admin"""
+    conn = get_db_connection()
+    
+    # Get all messages for this customer
+    messages = conn.execute('''
+        SELECT * FROM messages 
+        WHERE customer_id = ?
+        ORDER BY created_at ASC
+    ''', (session['customer_id'],)).fetchall()
+    
+    # Mark customer's unread messages as read (messages from admin)
+    conn.execute('''
+        UPDATE messages 
+        SET is_read = 1
+        WHERE customer_id = ? AND sender_type = 'admin' AND is_read = 0
+    ''', (session['customer_id'],))
+    
+    conn.commit()
+    conn.close()
+    
+    return render_template('customer/messages.html', 
+                         messages=messages,
+                         cart_count=get_cart_count())
+
+
+@app.route('/messages/send', methods=['POST'])
+@login_required
+def send_message():
+    """Send message to admin"""
+    message_text = request.form.get('message', '').strip()
+    
+    if not message_text:
+        flash('Message cannot be empty', 'error')
+        return redirect(url_for('messages'))
+    
+    if len(message_text) > 1000:
+        flash('Message is too long (max 1000 characters)', 'error')
+        return redirect(url_for('messages'))
+    
+    conn = get_db_connection()
+    
+    conn.execute('''
+        INSERT INTO messages (customer_id, sender_type, message)
+        VALUES (?, 'customer', ?)
+    ''', (session['customer_id'], message_text))
+    
+    conn.commit()
+    conn.close()
+    
+    flash('Message sent to admin successfully!', 'success')
+    return redirect(url_for('messages'))
+
+
+def get_unread_message_count():
+    """Get count of unread messages from admin for current customer"""
+    if 'customer_id' not in session:
+        return 0
+    
+    conn = get_db_connection()
+    count = conn.execute('''
+        SELECT COUNT(*) as count FROM messages 
+        WHERE customer_id = ? AND sender_type = 'admin' AND is_read = 0
+    ''', (session['customer_id'],)).fetchone()['count']
+    conn.close()
+    
+    return count
+
+# ============================================
 # APPLICATION STARTUP
 # ============================================
 
 if __name__ == '__main__':
+    migrate_database()  # ADD THIS LINE
     print("=" * 60)
     print("🍷 Cellar Society Customer Portal Starting...")
     print("=" * 60)
