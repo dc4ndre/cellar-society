@@ -5,7 +5,7 @@
 {% block content %}
 <div style="margin-bottom: 30px;">
     <h2 style="font-family: 'Playfair Display', serif; color: var(--primary); font-size: 2.5em; margin-bottom: 8px;">
-        💳 Checkout
+            Checkout
     </h2>
     <p style="color: var(--muted); font-size: 1.1em;">Complete your order</p>
 </div>
@@ -14,7 +14,7 @@
     <!-- Order Review -->
     <div>
         <div class="card">
-            <h3 style="color: var(--primary); margin-bottom: 20px;">📦 Order Review</h3>
+            <h3 style="color: var(--primary); margin-bottom: 20px;">Order Review</h3>
             
             {% for item_id, item in cart.items() %}
             <div style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #e5e0da;">
@@ -59,7 +59,7 @@
     <!-- Payment Summary -->
     <div>
         <div class="card" style="position: sticky; top: 100px;">
-            <h3 style="color: var(--primary); margin-bottom: 20px;">💰 Payment Summary</h3>
+            <h3 style="color: var(--primary); margin-bottom: 20px;">Payment Summary</h3>
             
             <div style="padding: 16px 0; border-top: 1px solid #e5e0da; border-bottom: 1px solid #e5e0da; margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
@@ -92,7 +92,7 @@
             <form method="POST">
                 <button type="submit" class="btn accent" style="width: 100%; font-size: 16px;" 
                         onclick="return confirm('Confirm your order for ₱{{ total|round(2) }}?');">
-                    ✓ Place Order
+                        Place Order
                 </button>
             </form>
 
