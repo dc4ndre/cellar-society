@@ -32,6 +32,43 @@ def migrate_database():
     conn.commit()
     conn.close()
 
+class CategoryHashTable:
+    def __init__(self):
+        self.categories = {}
+        self._initialize_categories()
+    
+    def _initialize_categories(self):
+        wine_types = ['Red', 'White', 'Rosé', 'Sparkling', 'Dessert', 'Fortified']
+        for wine_type in wine_types:
+            self.categories[wine_type] = []
+    
+    def add_product(self, category, product):
+        if category not in self.categories:
+            self.categories[category] = []
+        self.categories[category].append(product)
+    
+    def get_products(self, category):
+        return self.categories.get(category, [])
+    
+    def get_category_count(self, category):
+        return len(self.categories.get(category, []))
+    
+    def get_all_categories(self):
+        return list(self.categories.keys())
+    
+    def organize_products(self, products):
+        self._initialize_categories()
+        
+        for product in products:
+            category = product.get('type', 'Red')
+            self.add_product(category, product)
+    
+    def get_statistics(self):
+        return {category: len(items) for category, items in self.categories.items()}
+
+category_table = CategoryHashTable()
+
+
 class OrderQueue:
     def __init__(self):
         self.queue = deque()
@@ -227,6 +264,14 @@ def shop():
         query += ' ORDER BY created_at DESC'
     
     products = conn.execute(query, params).fetchall()
+    products_list = [dict(p) for p in products]
+
+    # Organize using hash table
+    category_table.organize_products(products_list)
+
+    # Fetch statistics
+    category_stats = category_table.get_statistics()
+
     recommendations = conn.execute('SELECT * FROM products WHERE stock > 0 ORDER BY RANDOM() LIMIT 6').fetchall()
     conn.close()
     
@@ -234,7 +279,7 @@ def shop():
     if 'customer_id' in session and 'search_history' in session:
         recent_searches = list(reversed(session['search_history'][-5:]))
     
-    return render_template('customer/shop.html', products=products, wine_type=wine_type, search=search, sort=sort, cart_count=get_cart_count(), recent_searches=recent_searches, recommendations=recommendations)
+    return render_template('customer/shop.html', products=products, wine_type=wine_type, search=search, sort=sort, cart_count=get_cart_count(), recent_searches=recent_searches, recommendations=recommendations, category_stats=category_stats)
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):

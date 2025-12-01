@@ -100,7 +100,7 @@
             </div>
         </div>
     </form>
-</div>
+</div>  
 
 <script>
 
@@ -138,6 +138,42 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+</script>
+
+<div class="card" style="margin-top: 20px; padding: 20px; background: #faf8f5; border-radius: 12px;">
+    <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.6em; font-weight: 700;">
+        Browse by Category
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
+        {% for category, count in category_stats.items() %}
+        <a href="{{ url_for('shop', type=category) }}" 
+           style="text-decoration: none; padding: 20px; background: white; border: 1px solid #e0dcd5;
+                  border-radius: 12px; text-align: center; transition: transform 0.3s, box-shadow 0.3s;
+                  display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            
+            <p style="color: var(--primary); font-weight: 600; margin: 0 0 8px 0; font-size: 1.1em;">
+                {{ category }}
+            </p>
+            <p style="color: var(--accent); font-weight: 700; font-size: 1.4em; margin: 0;">
+                {{ count }}
+            </p>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Add hover effect for category cards
+    document.querySelectorAll('.card a').forEach(card => {
+        card.addEventListener('mouseover', () => {
+            card.style.transform = 'translateY(-6px)';
+            card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.08)';
+        });
+        card.addEventListener('mouseout', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '';
+        });
+    });
 </script>
 
 

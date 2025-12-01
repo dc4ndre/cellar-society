@@ -3,6 +3,8 @@ from functools import wraps
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from PIL import Image
+import time
+import threading
 import sqlite3
 import hashlib
 import os
@@ -682,11 +684,65 @@ def get_total_unread_messages():
     conn.close()
     return count
 
+def auto_process_orders():
+    while True:
+        time.sleep(5)  # check every 5 seconds
+
+        conn = get_db_connection()
+
+        # Get next pending order
+        pending = conn.execute('''
+            SELECT id FROM orders 
+            WHERE status = 'Pending' 
+            ORDER BY order_date ASC 
+            LIMIT 1
+        ''').fetchone()
+
+        if pending:
+            order_id = pending['id']
+            print(f"[AUTO] Processing Order #{order_id} -> Processing")
+
+            shipped_date = datetime.now().strftime('%Y-%m-%d')
+            estimated_delivery = (datetime.now() + timedelta(days=4)).strftime('%B %d, %Y')
+
+            # Status → Processing
+            conn.execute('''
+                UPDATE orders 
+                SET status = 'Processing',
+                    shipped_date = ?, 
+                    estimated_delivery_date = ?
+                WHERE id = ?
+            ''', (shipped_date, estimated_delivery, order_id))
+            conn.commit()
+
+            time.sleep(5)
+
+            # Status → Delivered
+            print(f"[AUTO] Order #{order_id} -> Delivered")
+            conn.execute('UPDATE orders SET status = "Delivered" WHERE id = ?', (order_id,))
+            conn.commit()
+
+            time.sleep(5)
+
+            # Status → Received
+            print(f"[AUTO] Order #{order_id} -> Received")
+            conn.execute('UPDATE orders SET status = "Received" WHERE id = ?', (order_id,))
+            conn.commit()
+
+            print(f"[AUTO] ✅ Order #{order_id} fully completed.\n")
+
+        conn.close()
+
+def start_auto_processing():
+    t = threading.Thread(target=auto_process_orders, daemon=True)
+    t.start()
+
+
 if __name__ == '__main__':
     init_db()
     migrate_database()
     load_products_to_cache()
-    
+
     print("=" * 60)
     print("🍷 Cellar Society Admin Panel Starting...")
     print("=" * 60)
@@ -695,5 +751,11 @@ if __name__ == '__main__':
     print("   Username: admin")
     print("   Password: admin456")
     print("=" * 60)
-    
+    print("🤖 Auto Order Processing: ENABLED")
+    print("   Orders will auto-process every 5 seconds")
+    print("=" * 60)
+
+    # Start background 5-second auto-processing
+    start_auto_processing()
+
     app.run(debug=True, port=5000)
