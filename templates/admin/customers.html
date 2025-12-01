@@ -8,7 +8,7 @@
     <p>View and manage customer accounts (customers register via customer portal)</p>
 </div>
 
-<!-- Search Bar -->
+
 <div class="card">
     <form method="GET" class="search-bar">
         <input type="text" name="search" placeholder="Search by customer name or email..." value="{{ search }}">
@@ -17,7 +17,7 @@
     </form>
 </div>
 
-<!-- Customers Table -->
+
 <div class="card">
     <h3>Registered Customers ({{ customers|length }})</h3>
     
@@ -61,7 +61,7 @@
     {% endif %}
 </div>
 
-<!-- Info Box -->
+
 <div class="card" style="background: rgba(198, 166, 100, 0.05); border-left: 4px solid var(--accent);">
     <h3>About Customer Management</h3>
     <p style="font-size: 14px; line-height: 1.8; color: var(--muted);">

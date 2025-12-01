@@ -1,7 +1,3 @@
-"""
-Test script to manually set delivery dates on existing orders
-Run this to test if the display is working
-"""
 
 import sqlite3
 from datetime import datetime, timedelta

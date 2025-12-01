@@ -8,7 +8,6 @@
     <p>View and manage customer orders</p>
 </div>
 
-<!-- Filter Bar -->
 <div class="card">
     <form method="GET" class="search-bar">
         <select name="status" onchange="this.form.submit()">
@@ -24,7 +23,7 @@
     </form>
 </div>
 
-<!-- Orders Table -->
+
 <div class="card">
     <h3>All Orders ({{ orders|length }})</h3>
     
@@ -119,7 +118,7 @@
                         <div class="actions">
                             <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-small primary">View</a>
                             
-                            <!-- Status Update Dropdown -->
+                            
                             {% if order.status not in ['Received', 'Cancelled'] %}
                             <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}" style="display: inline;">
                                 <select name="status" onchange="if(confirm('Update order status?')) this.form.submit();" 
@@ -152,7 +151,7 @@
     {% endif %}
 </div>
 
-<!-- Order Status Workflow Guide -->
+
 <div class="card" style="background: rgba(198, 166, 100, 0.05);">
     <h3> Order Status Workflow</h3>
     <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap;">

@@ -12,12 +12,12 @@
     
 {% if cart %}
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-    <!-- Cart Items -->
+    
     <div>
         {% for item_id, item in cart.items() %}
         <div class="card" style="margin-bottom: 16px;">
             <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: 20px; align-items: center;">
-                <!-- Product Image -->
+                
                 <div>
                     {% if item.image_url %}
                     <img src="{{ item.image_url }}" alt="{{ item.name }}" 
@@ -29,7 +29,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Product Info -->
+                
                 <div>
                     <h3 style="color: var(--primary); margin-bottom: 8px; font-size: 1.2em;">
                         <a href="{{ url_for('product_detail', product_id=item.id) }}" 
@@ -50,10 +50,10 @@
                     {% endif %}
                 </div>
 
-                <!-- Quantity Controls -->
+                
                 <div style="text-align: right;">
                     <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-bottom: 12px;">
-                        <!-- Minus Button -->
+                        
                         <form method="POST" action="{{ url_for('update_cart', product_id=item.id) }}" style="display: inline;">
                             <input type="hidden" name="quantity" value="{{ item.quantity - 1 }}">
                             {% if item.quantity <= 1 %}
@@ -69,12 +69,12 @@
                             {% endif %}
                         </form>
                         
-                        <!-- Quantity Display -->
+                        
                         <span style="display: inline-block; width: 50px; text-align: center; font-weight: 600; font-size: 16px; padding: 8px; background: #f9f8f7; border-radius: 4px;">
                             {{ item.quantity }}
                         </span>
                         
-                        <!-- Plus Button -->
+                        
                         <form method="POST" action="{{ url_for('update_cart', product_id=item.id) }}" style="display: inline;">
                             <input type="hidden" name="quantity" value="{{ item.quantity + 1 }}">
                             {% if item.quantity >= item.stock %}
@@ -108,7 +108,7 @@
         </a>
     </div>
 
-    <!-- Order Summary -->
+   
     <div>
         <div class="card" style="position: sticky; top: 100px;">
             <h3 style="color: var(--primary); margin-bottom: 20px; font-size: 1.5em;">Order Summary</h3>
@@ -157,9 +157,8 @@
 </div>
 
 {% else %}
-<!-- Empty Cart -->
+
 <div class="card" style="text-align: center; padding: 80px 20px;">
-    <div style="font-size: 80px; margin-bottom: 24px;">🛒</div>
     <h3 style="color: var(--primary); margin-bottom: 16px; font-size: 1.8em;">Your Cart is Empty</h3>
     <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.1em;">
         Browse our premium wine collection and add your favorites!

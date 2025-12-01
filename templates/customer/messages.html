@@ -11,12 +11,12 @@
 </div>
 
 <div class="card" style="max-width: 900px; margin: 0 auto;">
-    <!-- Message Thread -->
+    
     <div style="background: #f9f8f7; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 500px; overflow-y: auto; margin-bottom: 20px;" id="messageThread">
         {% if messages %}
             {% for msg in messages %}
                 {% if msg.sender_type == 'customer' %}
-                    <!-- Customer Message (Right) -->
+                    
                     <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
                         <div style="max-width: 70%;">
                             <div style="background: var(--primary); color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -30,7 +30,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <!-- Admin Message (Left) -->
+                    
                     <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
                         <div style="max-width: 70%;">
                             <div style="background: white; color: var(--text); padding: 12px 16px; border-radius: 16px 16px 16px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e5e0da;">
@@ -46,7 +46,7 @@
                 {% endif %}
             {% endfor %}
         {% else %}
-            <!-- Empty State -->
+            
             <div style="text-align: center; padding: 80px 20px;">
                 
                 <h3 style="color: var(--primary); margin-bottom: 12px;">No Messages Yet</h3>
@@ -55,7 +55,7 @@
         {% endif %}
     </div>
 
-    <!-- Message Input -->
+    
     <form method="POST" action="{{ url_for('send_message') }}">
         <div style="display: flex; gap: 12px; align-items: end;">
             <div style="flex: 1;">
@@ -72,9 +72,9 @@
     </form>
 </div>
 
-<!-- Help Section -->
+
 <div class="card" style="max-width: 900px; margin: 24px auto 0; background: rgba(198, 166, 100, 0.05); border-left: 4px solid var(--accent);">
-    <h3 style="color: var(--primary); margin-bottom: 12px;">💡How to use Messages</h3>
+    <h3 style="color: var(--primary); margin-bottom: 12px;">How to use Messages</h3>
     <ul style="line-height: 2; color: var(--text); padding-left: 20px; margin: 0;">
         <li>Send messages to the admin for any concerns or questions</li>
         <li>You'll receive replies directly in this conversation</li>
@@ -84,7 +84,7 @@
 </div>
 
 <script>
-// Auto-scroll to bottom of message thread
+
 window.onload = function() {
     const messageThread = document.getElementById('messageThread');
     if (messageThread) {

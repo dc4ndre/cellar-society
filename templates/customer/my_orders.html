@@ -10,11 +10,11 @@
     <p style="color: var(--muted); font-size: 1.1em;">Track and manage your purchases</p>
 </div>
 
-<!-- Order Status Tabs -->
+
 <div class="card" style="margin-bottom: 24px;">
     <div style="display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; overflow-x: auto;">
 
-        <!-- ALL ORDERS -->
+        
         <a href="{{ url_for('my_orders') }}"
            {% if not status_filter %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -29,7 +29,7 @@
             All Orders
         </a>
 
-        <!-- TO PAY -->
+        
         <a href="{{ url_for('my_orders', status='Pending') }}"
            {% if status_filter == 'Pending' %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -51,7 +51,7 @@
             {% endif %}
         </a>
 
-        <!-- PROCESSING -->
+        
         <a href="{{ url_for('my_orders', status='Processing') }}"
            {% if status_filter == 'Processing' %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -73,7 +73,7 @@
             {% endif %}
         </a>
 
-        <!-- DELIVERED -->
+        
         <a href="{{ url_for('my_orders', status='Delivered') }}"
            {% if status_filter == 'Delivered' %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -95,7 +95,7 @@
             {% endif %}
         </a>
 
-        <!-- RECEIVED -->
+        
         <a href="{{ url_for('my_orders', status='Received') }}"
            {% if status_filter == 'Received' %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -110,7 +110,7 @@
             Completed
         </a>
 
-        <!-- CANCELLED -->
+        
         <a href="{{ url_for('my_orders', status='Cancelled') }}"
            {% if status_filter == 'Cancelled' %}
                 style="padding: 16px 24px; text-decoration: none; font-weight: 600;
@@ -130,11 +130,11 @@
 
 
 {% if orders %}
-<!-- Orders List -->
+
 <div style="display: grid; gap: 16px;">
     {% for order in orders %}
     <div class="card" style="padding: 0; overflow: hidden;">
-        <!-- Order Header -->
+        
         <div style="padding: 16px 24px; background: rgba(198, 166, 100, 0.05); border-bottom: 1px solid #e5e0da; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; gap: 20px; align-items: center;">
                 <div>
@@ -142,7 +142,7 @@
                     <p style="font-weight: 600; margin: 0;">{{ order.order_date[:10] }}</p>
                 </div>
                 
-                <!-- Show estimated delivery date if status is Processing or Delivered -->
+                
                 {% if order.status in ['Processing', 'Delivered'] and order.estimated_delivery_date %}
                 <div>
                     <span style="color: var(--muted); font-size: 12px;">ESTIMATED DELIVERY</span>
@@ -153,7 +153,7 @@
                 {% endif %}
             </div>
             
-            <!-- Status Badge -->
+            
             {% if order.status == 'Pending' %}
                 <span style="background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">To Pay</span>
             {% elif order.status == 'Processing' %}
@@ -167,10 +167,10 @@
             {% endif %}
         </div>
 
-        <!-- Order Content -->
+        
         <div style="padding: 20px 24px;">
             <div style="display: flex; gap: 20px; align-items: center;">
-                <!-- Product Image -->
+                
                 <div style="flex: 0 0 100px;">
                     {% if order.product_image %}
                     <img src="{{ order.product_image }}" alt="{{ order.product_name }}" 
@@ -182,7 +182,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Product Details -->
+                
                 <div style="flex: 1;">
                     <h3 style="color: var(--primary); margin: 0 0 8px 0; font-size: 1.2em;">{{ order.product_name }}</h3>
                     <p style="color: var(--muted); font-size: 14px; margin: 4px 0;">
@@ -191,7 +191,7 @@
                     <p style="color: var(--text); margin: 8px 0;">Quantity: <strong>{{ order.quantity }} bottle(s)</strong></p>
                 </div>
 
-                <!-- Price -->
+                
                 <div style="text-align: right; flex: 0 0 150px;">
                     <p style="color: var(--muted); font-size: 13px; margin-bottom: 4px;">Total Price</p>
                     <p style="color: var(--accent); font-weight: 700; font-size: 1.8em; margin: 0;">₱{{ "%.2f"|format(order.total_price) }}</p>
@@ -199,7 +199,7 @@
             </div>
         </div>
 
-        <!-- Order Actions -->
+        
         <div style="padding: 16px 24px; background: #f9f8f7; border-top: 1px solid #e5e0da; display: flex; justify-content: space-between; align-items: center;">
             <div style="flex: 1;">
                 {% if order.status == 'Pending' %}
@@ -258,7 +258,7 @@
 </div>
 
 {% else %}
-<!-- Empty State -->
+
 <div class="card" style="text-align: center; padding: 80px 20px;">
     {% if status_filter == 'Pending' %}
         

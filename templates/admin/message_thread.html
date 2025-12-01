@@ -9,7 +9,7 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-    <!-- Message Thread -->
+    
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e5e0da;">
             <h3 style="color: var(--primary); margin: 0;">Message Thread</h3>
@@ -18,12 +18,12 @@
             </a>
         </div>
 
-        <!-- Messages -->
+        
         <div style="background: #f9f8f7; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 500px; overflow-y: auto; margin-bottom: 20px;" id="messageThread">
             {% if messages %}
                 {% for msg in messages %}
                     {% if msg.sender_type == 'customer' %}
-                        <!-- Customer Message (Left) -->
+                        
                         <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
                             <div style="max-width: 70%;">
                                 <div style="background: white; color: var(--text); padding: 12px 16px; border-radius: 16px 16px 16px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e5e0da;">
@@ -37,7 +37,7 @@
                             </div>
                         </div>
                     {% else %}
-                        <!-- Admin Message (Right) -->
+                        
                         <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
                             <div style="max-width: 70%;">
                                 <div style="background: var(--accent); color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -61,7 +61,7 @@
             {% endif %}
         </div>
 
-        <!-- Reply Form -->
+        
         <form method="POST" action="{{ url_for('send_message_to_customer', customer_id=customer.id) }}">
             <div style="display: flex; gap: 12px; align-items: end;">
                 <div style="flex: 1;">
@@ -81,7 +81,7 @@
         </form>
     </div>
 
-    <!-- Customer Info Sidebar -->
+    
     <div>
         <div class="card">
             <h3 style="color: var(--primary); margin-bottom: 20px;">Customer Information</h3>
@@ -124,7 +124,7 @@
 </div>
 
 <script>
-// Auto-scroll to bottom of message thread
+
 window.onload = function() {
     const messageThread = document.getElementById('messageThread');
     if (messageThread) {

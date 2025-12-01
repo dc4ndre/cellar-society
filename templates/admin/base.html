@@ -476,7 +476,7 @@
     </header>
 
     <main>
-        <!-- Flash Messages -->
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
@@ -487,7 +487,7 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Page Content -->
+        
         {% block content %}{% endblock %}
     </main>
 

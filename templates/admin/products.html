@@ -8,7 +8,7 @@
     <p>Manage your wine inventory.</p>
 </div>
 
-<!-- Search and Filter -->
+
 <div class="card">
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search by wine name or region..." oninput="filterProducts()">
@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<!-- Products Table -->
+
 <div class="card">
     <h3 id="productCount">Wine Inventory ({{ products|length }} items)</h3>
     
@@ -138,7 +138,7 @@
         </table>
     </div>
     
-    <!-- No results message (hidden by default) -->
+    
     <div id="noResults" style="display: none;" class="empty-state">
         <h3>No Wines Found</h3>
         <p>No products match your search criteria. Try different keywords.</p>
@@ -155,7 +155,7 @@
 
 
 <script>
-// Live search function - filters as you type
+
 function filterProducts() {
     const searchValue = document.getElementById('searchInput').value.toLowerCase();
     const typeValue = document.getElementById('typeFilter').value.toLowerCase();
@@ -165,23 +165,23 @@ function filterProducts() {
     
     let visibleCount = 0;
     
-    // Loop through all table rows
+    
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const cells = row.getElementsByTagName('td');
         
         if (cells.length > 0) {
-            const wineName = cells[2].textContent.toLowerCase(); // Changed from 1 to 2 (because of image column)
-            const wineType = cells[3].textContent.toLowerCase(); // Changed from 2 to 3
-            const wineRegion = cells[4].textContent.toLowerCase(); // Changed from 3 to 4
+            const wineName = cells[2].textContent.toLowerCase(); 
+            const wineType = cells[3].textContent.toLowerCase(); 
+            const wineRegion = cells[4].textContent.toLowerCase(); 
             
-            // Check if matches search term (name OR region)
+            
             const matchesSearch = wineName.includes(searchValue) || wineRegion.includes(searchValue);
             
-            // Check if matches type filter
+            
             const matchesType = typeValue === '' || wineType.includes(typeValue);
             
-            // Show row if matches both conditions
+            
             if (matchesSearch && matchesType) {
                 row.style.display = '';
                 visibleCount++;
@@ -191,10 +191,10 @@ function filterProducts() {
         }
     }
     
-    // Update product count
+    
     document.getElementById('productCount').textContent = `Wine Inventory (${visibleCount} items)`;
     
-    // Show/hide "no results" message
+    
     if (visibleCount === 0 && tbody.rows.length > 0) {
         tbody.style.display = 'none';
         noResults.style.display = 'block';
@@ -204,7 +204,7 @@ function filterProducts() {
     }
 }
 
-// Clear all filters
+
 function clearFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('typeFilter').value = '';

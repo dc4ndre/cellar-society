@@ -9,7 +9,7 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-    <!-- Order Information -->
+    
     <div class="card">
         <h3>Order Information</h3>
         <div style="margin-top: 20px;">
@@ -35,7 +35,7 @@
                 {% endif %}
             </div>
 
-            <!-- Status Update Form -->
+            
             {% if order.status not in ['Received', 'Cancelled'] %}
             <div style="margin-bottom: 16px; padding: 16px; background: rgba(198, 166, 100, 0.05); border-radius: 8px; border-left: 4px solid var(--accent);">
                 <p style="font-weight: 600; color: var(--primary); margin-bottom: 12px;">Update Order Status</p>
@@ -78,7 +78,7 @@
         </div>
     </div>
     
-    <!-- Customer Information -->
+    
     <div class="card">
         <h3>Customer Information</h3>
         <div style="margin-top: 20px;">
@@ -107,7 +107,7 @@
     </div>
 </div>
 
-<!-- Product Details -->
+
 <div class="card">
     <h3>Product Details</h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
@@ -133,7 +133,7 @@
     </div>
 </div>
 
-<!-- Action Buttons -->
+
 <div style="display: flex; gap: 12px;">
     <a href="{{ url_for('orders') }}" class="btn ghost">← Back to Orders</a>
     <a href="{{ url_for('products') }}" class="btn accent">View All Products</a>

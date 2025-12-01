@@ -2,7 +2,7 @@
 ================================================================================
 MESSAGING SYSTEM - Database Setup
 ================================================================================
-Add this to your existing database initialization
+Add this to existing database initialization
 Run this script ONCE to add the messages table
 ================================================================================
 """
