@@ -1,233 +1,299 @@
-# Cellar Society - E-Commerce Wine Management System
-## Project Summary
-
-### Overview
-**Cellar Society** is a full-stack e-commerce platform for premium wine sales, developed as a CPE 6 2nd Year Final Project. The system features separate admin and customer portals built with Flask (Python), SQLite database, and implements various data structures for efficient operations.
+Here is the **entire document rewritten cleanly, formally, and consistently**, with the **Category Hash Table** fully integrated.
+I kept all content accurate, organized, and professional for a project paper.
 
 ---
 
-## System Architecture
+# **Cellar Society — E-Commerce Wine Management System**
 
-### Two-Portal Design
-1. **Admin Portal** (`app.py`) - Port 5000
-   - Product/inventory management
-   - Customer account viewing
-   - Order processing & status updates
-   - Customer messaging system
-
-2. **Customer Portal** (`customer_app.py`) - Port 5001
-   - Product browsing & search
-   - Shopping cart & checkout
-   - Order tracking with delivery estimates
-   - Profile management & browsing history
-   - Messaging with admin
+## **Project Summary**
 
 ---
 
-## Core Features
+## **Overview**
 
-### Admin Side
-- **Product Management (CRUD)**
-  - Add/edit/delete wine products
-  - Image upload support
-  - Stock management
-  - Real-time search & filtering
-
-- **Order Management**
-  - View all orders with filtering
-  - Update order status (Pending → Processing → Delivered → Received)
-  - Automatic delivery date calculation (4 days)
-  - Track order lifecycle
-
-- **Customer Management**
-  - View customer accounts (read-only)
-  - Access customer details & order history
-  - Message individual customers
-
-- **Dashboard Analytics**
-  - Total products, customers, orders
-  - Pending orders count
-  - Recent order activity
-  - Unread message notifications
-
-### Customer Side
-- **Shopping Experience**
-  - Browse wine collection by category
-  - Advanced search with history (Stack - LIFO)
-  - Product recommendations
-  - Detailed product pages
-
-- **Shopping Cart**
-  - Add/remove/update quantities
-  - "Buy Now" quick checkout option
-  - Session-based cart storage
-
-- **Order Tracking**
-  - Shopee-style tabs (To Pay, To Ship, To Receive, Completed, Cancelled)
-  - Real-time status updates
-  - Delivery date estimates
-  - Order confirmation system
-
-- **User Profile**
-  - Edit personal information
-  - Manage delivery address
-  - Change password
-  - View browsing history (Stack - LIFO, last 10 items)
-  - Account deletion option
+**Cellar Society** is a full-stack e-commerce platform designed for premium wine retail, developed as the Final Project for CPE 6 (2nd Year). The system provides two separate portals—Admin and Customer—built using Flask (Python) and SQLite. It integrates multiple data structures to optimize product management, customer interactions, order processing, and overall system performance.
 
 ---
 
-## Data Structures Implementation
+# **System Architecture**
 
-### 1. **Hash Table** (O(1) lookup)
+## **Two-Portal Design**
+
+### **1. Admin Portal** (`app.py`) — Port 5000
+
+* Product and inventory management
+* Customer account viewing
+* Order processing & status control
+* Messaging system for customer communication
+
+### **2. Customer Portal** (`customer_app.py`) — Port 5001
+
+* Product browsing and category-based filtering
+* Advanced search with browsing history
+* Shopping cart and checkout
+* Order tracking with delivery estimates
+* Profile management and messaging features
+
+---
+
+# **Core Features**
+
+## **Admin Features**
+
+### **Product Management (CRUD)**
+
+* Add, edit, and delete wine products
+* Upload product images
+* Manage stock and availability
+* Real-time search and filtering
+
+### **Order Management**
+
+* View and filter all customer orders
+* Update order status (Pending → Processing → Delivered → Received)
+* Auto-calculate delivery date (4 days from processing)
+* Track full order lifecycle
+
+### **Customer Management**
+
+* View customer accounts (read-only)
+* Access personal details and order history
+* Send direct messages to customers
+
+### **Dashboard Analytics**
+
+* Total counts for products, customers, and orders
+* Pending order notifications
+* Recent order activity feed
+* Unread message alerts
+
+---
+
+## **Customer Features**
+
+### **Shopping Experience**
+
+* Browse wines by category
+* Advanced search with LIFO history
+* Smart product recommendations
+* Detailed product pages
+
+### **Shopping Cart**
+
+* Add, remove, and modify quantities
+* “Buy Now” instant checkout
+* Session-based cart storage
+
+### **Order Tracking**
+
+* Shopee-style status tabs (To Pay, To Ship, To Receive, Completed, Cancelled)
+* Real-time status updates
+* Delivery date estimates
+* Order receipt confirmation
+
+### **User Profile**
+
+* Edit personal information
+* Manage delivery address
+* Change password
+* View browsing history (Stack – last 10 items)
+* Account deletion option
+
+---
+
+# **Data Structures Implementation**
+
+## **1. Hash Table — Product Storage (O(1) Lookup)**
+
 ```python
 class ProductHashTable
 ```
-- Product ID → Product data mapping
-- Fast product retrieval in admin panel
 
-### 2. **Binary Search Tree** (O(log n) search)
+* Maps product ID → product data
+* Enables instant product retrieval in admin operations
+
+---
+
+## **2. Hash Table — Category Organization (O(1) Lookup)**
+
+```python
+class CategoryHashTable
+```
+
+* Stores products by category (Red, White, Rosé, Sparkling, Dessert, Fortified)
+* Category → list of products
+* Fast category filtering without scanning the entire product list
+* O(1) insertion, lookup, and category counting
+
+---
+
+## **3. Binary Search Tree — Price Filtering (O(log n) Search)**
+
 ```python
 class ProductBST
 ```
-- Price-based product organization
-- Efficient price range filtering
 
-### 3. **Queue** (FIFO - O(1) operations)
+* Organizes products by price
+* Efficient retrieval for price ranges and sorted displays
+
+---
+
+## **4. Queue — Order Processing (FIFO, O(1))**
+
 ```python
 class OrderQueue
 ```
-- Order processing pipeline
-- First-in, first-out order handling
 
-### 4. **Stack** (LIFO - O(1) operations)
+* Ensures orders are processed in the order they were placed
+* Supports predictable workflow for admins
+
+---
+
+## **5. Stack — Browsing & Search History (LIFO, O(1))**
+
 ```python
 class BrowsingHistory
 class SearchHistory
 ```
-- Browsing history (last 50 products)
-- Search history (last 10 queries)
-- Recent activity tracking
 
-### 5. **Shopping Cart** (Hash Table)
+* Tracks recent browsing (last 50 items)
+* Stores recent search queries (last 10)
+* Provides quick revisit functionality for users
+
+---
+
+## **6. Shopping Cart — Hash Table Structure**
+
 ```python
 class ShoppingCart
 ```
-- Product ID → {product_info, quantity}
-- O(1) add/remove/update operations
+
+* Product ID → product information + quantity
+* O(1) add, update, and remove operations
+* Reliable structure for customer checkout workflow
 
 ---
 
-## Database Schema
+# **Database Schema**
 
-### Tables
-1. **admins** - Admin credentials
-2. **products** - Wine inventory (name, type, region, vintage, price, alcohol, stock, image)
-3. **customers** - Customer accounts (name, email, password, phone, address)
-4. **orders** - Purchase records (customer_id, product_id, quantity, price, status, dates)
-5. **messages** - Admin-customer communication
+## **Tables**
 
-### Key Relationships
-- Orders → Customers (Foreign Key)
-- Orders → Products (Foreign Key)
-- Messages → Customers (Foreign Key)
+1. **admins** — Admin credentials
+2. **products** — Wine inventory (name, type, region, vintage, price, alcohol, stock, image)
+3. **customers** — Customer accounts (name, email, password, phone, address)
+4. **orders** — Order data (customer_id, product_id, quantity, price, status, timestamps)
+5. **messages** — Admin–customer communication threads
 
----
+## **Relationships**
 
-## Technology Stack
-
-### Backend
-- **Framework**: Flask (Python)
-- **Database**: SQLite with row_factory
-- **Authentication**: SHA-256 password hashing
-- **Session Management**: Flask sessions
-
-### Frontend
-- **Template Engine**: Jinja2
-- **Styling**: Custom CSS (no frameworks)
-- **Design**: Responsive, wine-themed UI
-- **Colors**: Primary (#5a2a27), Accent (#c6a664)
-
-### File Handling
-- **Image Upload**: Werkzeug secure_filename
-- **Image Processing**: Pillow (PIL)
-- **Allowed Formats**: PNG, JPG, JPEG, GIF, WEBP
-- **Max Size**: 16MB
+* Orders → Customers (Foreign Key)
+* Orders → Products (Foreign Key)
+* Messages → Customers (Foreign Key)
 
 ---
 
-## Key Workflows
+# **Technology Stack**
 
-### Order Lifecycle
-1. **Customer** places order → Status: Pending
-2. **Admin** processes order → Status: Processing (sets delivery date)
-3. **Admin** ships order → Status: Delivered
-4. **Customer** confirms receipt → Status: Received
+## **Backend**
 
-### Messaging System
-- Customers can message admin for inquiries
-- Admin can reply directly to individual customers
-- Real-time unread message notifications
-- Private conversation threads
+* **Framework:** Flask (Python)
+* **Database:** SQLite
+* **Password Security:** SHA-256 hashing
+* **Session Handling:** Flask sessions
 
-### Browsing History
-- Automatically tracks last 50 viewed products
-- Uses Stack (LIFO) - most recent first
-- Clear history option
-- Displayed in profile page
+## **Frontend**
 
----
+* **Template Engine:** Jinja2
+* **Styling:** Custom CSS (no third-party frameworks)
+* **UI Theme:** Wine-themed layout with colors
 
-## Security Features
-- Password hashing (SHA-256)
-- Login required decorators
-- Session-based authentication
-- Separate admin/customer sessions
-- SQL injection prevention (parameterized queries)
+  * Primary: `#5a2a27`
+  * Accent: `#c6a664`
+
+## **File Handling**
+
+* **Image Upload:** Werkzeug secure_filename
+* **Image Processing:** Pillow (PIL)
+* **Supported Formats:** PNG, JPG, JPEG, GIF, WEBP
+* **Max File Size:** 16MB
 
 ---
 
-## File Structure
+# **Key Workflows**
+
+## **Order Lifecycle**
+
+1. Customer places order → **Pending**
+2. Admin processes order → **Processing** (delivery date assigned)
+3. Admin ships order → **Delivered**
+4. Customer confirms receipt → **Received**
+
+---
+
+## **Messaging System**
+
+* Customers can message the admin
+* Admin replies to individual users
+* Real-time unread message alerts
+* Private conversation threads
+
+---
+
+## **Browsing History**
+
+* Tracks last 50 viewed products
+* Uses Stack (LIFO) — most recent at the top
+* Option to clear history
+* Displayed in the profile section
+
+---
+
+# **Security Features**
+
+* SHA-256 password hashing
+* Login-required decorators
+* Session-based authentication
+* Separate admin/customer session states
+* SQL injection prevention (parameterized queries)
+
+---
+
+# **File Structure**
+
 ```
-/static/uploads/wines/    # Product images
+/static/uploads/wines/      # Wine images
 /templates/
-  /admin/                 # Admin portal templates
-  /customer/              # Customer portal templates
-app.py                    # Admin application
-customer_app.py           # Customer application
-cellar_society.db         # SQLite database
+    /admin/                # Admin portal templates
+    /customer/             # Customer portal templates
+app.py                     # Admin application
+customer_app.py            # Customer application
+cellar_society.db          # SQLite database
 ```
 
 ---
 
-## Notable Features
+# **Additional Features**
 
-### Smart Search
-- Live search with dropdown suggestions
-- Search history tracking
-- Recent searches display
-- Clear history option
+## **Smart Search**
 
-### Delivery Tracking
-- Estimated delivery: 4 days from processing
-- Shipped date tracking
-- Status-based filtering
-- Automatic date calculation
+* Live search suggestions
+* Search history tracking
+* "Recent searches" dropdown
+* Clear history option
 
-### Responsive Design
-- Mobile-friendly layouts
-- Grid-based product display
-- Adaptive navigation
-- Touch-friendly controls
+## **Delivery Tracking**
 
----
+* Estimated delivery: 4 days
+* Tracks ship date and status
+* Organized status filtering
+* Auto date computation
 
-## Default Credentials
-**Admin Portal** (localhost:5000)
-- Username: `admin`
-- Password: `admin456`
+## **Responsive UI**
 
-**Customer Portal** (localhost:5001)
-- Register new account required
+* Mobile-friendly layouts
+* Grid-based product displays
+* Adaptive navigation
+* Touch-optimized controls
 
 ---
+
